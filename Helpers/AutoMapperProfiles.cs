@@ -11,8 +11,8 @@ namespace API.Helpers
             CreateMap<AppUser, ResultUpdateUserDto>();
             CreateMap<AppUser, ResultAllUserDto>();
             CreateMap<AppUser, ResultloginDto>();
-            // CreateMap<AppAcces, AccessResultDto>();
-            // CreateMap<AppAcces, AccessListResultDto>();
+            CreateMap<AppChat, MessageResultDto>();
+            CreateMap<SendMessageDto, AppChat>();
             // CreateMap<CreateAccessDto, AppAcces>();
             // CreateMap<CreateRolesDto, AppRole>();
             // CreateMap<UpdateRolesDto, AppRole>();

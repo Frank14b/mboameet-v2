@@ -39,8 +39,6 @@ namespace API.Entities
 
         public DateTime LastLogin { get; set; }
 
-        // public DateTime DateOfBirth { get; set; } = DateTime.DateTime;
-
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public DateTime UpdatedAt { get; set; }

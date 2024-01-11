@@ -10,9 +10,9 @@ namespace API.Data
 
         public DbSet<AppUser> Users { get; set; }
 
-        // public DbSet<AppAcces> Access { get; set; }
+        public DbSet<AppChat> Chats { get; set; }
 
-        // public DbSet<AppRole> Roles { get; set; }
+        public DbSet<AppMatch> Matches { get; set; }
 
         // public DbSet<AppRoleAcces> Roleaccess { get; set; }
 

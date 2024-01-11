@@ -97,7 +97,9 @@ namespace API.Controllers
 
                 if (result == null) Unauthorized("Invalid Login / Password, User not found");
 
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
                 using var hmac = new HMACSHA512(result.PasswordSalt);
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
 
                 var computedHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(data.Password));
 

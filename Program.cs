@@ -81,8 +81,8 @@ builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 builder.Services.Configure<MailSettings>(builder.Configuration.GetSection("MailSettings"));
 
 builder.Services.AddScoped<ITokenService, TokenService>();
-
 builder.Services.AddScoped<IMailService, MailService>();
+builder.Services.AddScoped<IChatService, ChatService>();
 
 builder.Services.AddScoped<UserSeeder>();
 
