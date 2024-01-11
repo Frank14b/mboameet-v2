@@ -1,6 +1,7 @@
 using API.Commons;
 using API.Data;
 using API.DTOs;
+using API.Entities;
 using API.Interfaces;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
@@ -15,11 +16,21 @@ namespace API.Controllers
         private readonly DataContext _dataContext;
         // private readonly EmailsCommon _emailsCommon;
         private readonly IMapper _mapper;
+        private readonly IMatchService _matchService;
+        private readonly IUserService _userService;
 
-        public MatchController(DataContext context, IMapper mapper, IConfiguration configuration, IMailService mailService)
+        public MatchController(
+            DataContext context,
+            IMapper mapper,
+            IConfiguration configuration,
+            IMailService mailService,
+            IMatchService matchService,
+            IUserService userService)
         {
             _dataContext = context;
             _mapper = mapper;
+            _matchService = matchService;
+            _userService = userService;
         }
 
         [HttpPost("")]
@@ -27,7 +38,20 @@ namespace API.Controllers
         {
             try
             {
-                
+                if (await _matchService.CheckIfUserReceivedMatchRequest(_userService.GetConnectedUser(User), data.MatchedUser, (int)MatchStateEnum.rejected))
+                {
+                    return BadRequest("A previous request was rejected");
+                }
+
+                if (await _matchService.CheckIfUserReceivedMatchRequest(_userService.GetConnectedUser(User), data.MatchedUser, (int)MatchStateEnum.approved))
+                {
+                    return Ok("A previous request was approved");
+                }
+
+                if (await _matchService.CheckIfUserReceivedMatchRequest(_userService.GetConnectedUser(User), data.MatchedUser, (int)MatchStateEnum.inititated))
+                {
+                    
+                }
             }
             catch (Exception e)
             {

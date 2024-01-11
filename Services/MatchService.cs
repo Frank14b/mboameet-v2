@@ -34,7 +34,7 @@ namespace API.Services
             }
         }
 
-        public async Task<bool> CheckIfUserSendMatchRequest(string user, string matchUser)
+        public async Task<bool> CheckIfUserSendMatchRequest(string user, string matchUser, int type = (int)MatchStateEnum.inititated)
         {
             try
             {
@@ -52,7 +52,7 @@ namespace API.Services
             }
         }
 
-        public async Task<bool> CheckIfUserReceivedMatchRequest(string user, string matchUser)
+        public async Task<bool> CheckIfUserReceivedMatchRequest(string user, string matchUser, int type = (int)MatchStateEnum.inititated)
         {
             try
             {
@@ -61,6 +61,11 @@ namespace API.Services
                 var _result = await query.FirstOrDefaultAsync();
 
                 if (_result == null) return false;
+
+                if (_result.State != type)
+                {
+                    return false;
+                }
 
                 return true;
             }
