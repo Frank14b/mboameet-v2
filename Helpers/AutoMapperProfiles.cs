@@ -13,8 +13,8 @@ namespace API.Helpers
             CreateMap<AppUser, ResultloginDto>();
             CreateMap<AppChat, MessageResultDto>();
             CreateMap<SendMessageDto, AppChat>();
-            // CreateMap<CreateAccessDto, AppAcces>();
-            // CreateMap<CreateRolesDto, AppRole>();
+            CreateMap<AddMatchDto, AppMatch>();
+            CreateMap<AppMatch, MatchesResultDto>();
             // CreateMap<UpdateRolesDto, AppRole>();
             // CreateMap<AppRole, RoleResultDtos>();
             // CreateMap<DeleteRolesDto, AppRole>();

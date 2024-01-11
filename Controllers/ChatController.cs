@@ -17,15 +17,16 @@ namespace API.Controllers
 
         private readonly DataContext _dataContext;
         // private readonly EmailsCommon _emailsCommon;
+        // private readonly IChatService _chatService;
         private readonly IMapper _mapper;
-        private readonly IChatService _chatService;
         private readonly IUserService _userService;
+        private readonly IMatchService _matchService;
 
         public ChatController(DataContext context, IChatService chatService, IMapper mapper, IUserService userService, IConfiguration configuration, IMailService mailService)
         {
             _dataContext = context;
             _mapper = mapper;
-            _chatService = chatService;
+            // _chatService = chatService;
             _userService = userService;
         }
 
@@ -34,7 +35,7 @@ namespace API.Controllers
         {
             try
             {
-                if (!await _chatService.CheckIfUserIsMatch(_userService.GetConnectedUser(User), data.Receiver.ToString())) return BadRequest("You must be matching with this user to send a message");
+                if (!await _matchService.CheckIfUserIsMatch(_userService.GetConnectedUser(User), data.Receiver.ToString())) return BadRequest("You must be matching with this user to send a message");
 
                 var newChat = _mapper.Map<AppChat>(data);
                 newChat.MessageType = (int)EnumMessageType.text;
