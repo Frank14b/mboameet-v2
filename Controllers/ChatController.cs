@@ -22,12 +22,13 @@ namespace API.Controllers
         private readonly IUserService _userService;
         private readonly IMatchService _matchService;
 
-        public ChatController(DataContext context, IChatService chatService, IMapper mapper, IUserService userService, IConfiguration configuration, IMailService mailService)
+        public ChatController(DataContext context, IChatService chatService, IMatchService matchService, IMapper mapper, IUserService userService, IConfiguration configuration, IMailService mailService)
         {
             _dataContext = context;
             _mapper = mapper;
             // _chatService = chatService;
             _userService = userService;
+            _matchService = matchService;
         }
 
         [HttpPost("")]
