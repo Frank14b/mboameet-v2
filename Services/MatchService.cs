@@ -2,6 +2,7 @@ using API.Data;
 using API.DTOs;
 using API.Entities;
 using API.Interfaces;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using MongoDB.Bson;
 
@@ -142,6 +143,36 @@ namespace API.Services
                 {
                     Status = false
                 }; ;
+            }
+        }
+
+        public async Task<AppMatch?> GetUserMatchSendRequest(string userId)
+        {
+            try
+            {
+                var query = _dataContext.Matches.Where(m => m.User.ToString() == userId && m.Status == (int)StatusEnum.enable && m.State == (int)MatchStateEnum.inititated);
+                var match = await query.FirstOrDefaultAsync();
+
+                return match;
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
+
+        public async Task<AppMatch?> GetUserMatchReceivedRequest(string userId)
+        {
+            try
+            {
+                var query = _dataContext.Matches.Where(m => m.MatchedUser.ToString() == userId && m.Status == (int)StatusEnum.enable && m.State == (int)MatchStateEnum.inititated);
+                var match = await query.FirstOrDefaultAsync();
+
+                return match;
+            }
+            catch (Exception)
+            {
+                return null;
             }
         }
     }

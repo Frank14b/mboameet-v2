@@ -115,5 +115,59 @@ namespace API.Controllers
                 return BadRequest("An error occurred or no matches found " + e);
             }
         }
+
+        [HttpDelete("{id}")]
+        public async Task<ActionResult<BooleanReturnDto>> CancelMatchRequest()
+        {
+            try
+            {
+                string userId = _userService.GetConnectedUser(User);
+
+                var match = await _matchService.GetUserMatchSendRequest(userId);
+
+                if (match == null) return NotFound("Request not found");
+
+                match.Status = (int)StatusEnum.delete;
+                await _dataContext.SaveChangesAsync();
+
+                return new BooleanReturnDto
+                {
+                    Status = true,
+                    Message = "The provided request has been cancelled"
+                };
+            }
+            catch (Exception e)
+            {
+                return BadRequest("An error occurred or request found " + e);
+            }
+        }
+
+        [HttpPatch("{id}/review")]
+        public async Task<ActionResult<BooleanReturnDto>> ReplyMatchRequest(string action = "approved")
+        {
+            try
+            {
+                if (action != "approved" && action != "declined") return BadRequest("Invalid action : approved or declined");
+
+                string userId = _userService.GetConnectedUser(User);
+
+                var match = await _matchService.GetUserMatchReceivedRequest(userId);
+
+                if (match == null) return NotFound("Request not found");
+
+                match.State = (action == "approved") ? (int)MatchStateEnum.approved : (int)MatchStateEnum.rejected;
+                await _dataContext.SaveChangesAsync();
+
+                return new BooleanReturnDto
+                {
+                    Status = true,
+                    Message = "The provided request has been cancelled"
+                };
+            }
+            catch (Exception e)
+            {
+                return BadRequest("An error occurred or request found " + e);
+            }
+        }
     }
 }

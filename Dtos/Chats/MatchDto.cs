@@ -34,9 +34,12 @@ namespace API.DTOs
         public required int Total { get; set; }
     }
 
-    public class BooleanReturnDto
+    public class MatchesRequestAction
     {
-        public required bool Status { get; set; }
-        public AppMatch? Data { get; set; }
+        public enum Actions
+        {
+            approved = 0,
+            declined = 1
+        }
     }
 }
