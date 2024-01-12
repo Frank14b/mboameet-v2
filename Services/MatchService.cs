@@ -1,4 +1,5 @@
 using API.Data;
+using API.DTOs;
 using API.Entities;
 using API.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -16,7 +17,7 @@ namespace API.Services
             _dataContext = context;
         }
 
-        public async Task<bool> CheckIfUserIsMatch(string user, string matchUser)
+        public async Task<BooleanReturnDto> CheckIfUserIsMatch(string user, string matchUser)
         {
             try
             {
@@ -24,17 +25,55 @@ namespace API.Services
 
                 var _result = await query.FirstOrDefaultAsync();
 
-                if (_result == null) return false;
+                if (_result == null) return new BooleanReturnDto
+                {
+                    Status = false
+                };
 
-                return true;
+                return new BooleanReturnDto
+                {
+                    Status = true,
+                    Data = _result
+                };
             }
             catch (Exception)
             {
-                return false;
+                return new BooleanReturnDto
+                {
+                    Status = false
+                };
             }
         }
 
-        public async Task<bool> CheckIfUserSendMatchRequest(string user, string matchUser, int type = (int)MatchStateEnum.inititated)
+        public async Task<BooleanReturnDto> CheckIfMatchRequestExist(string user, string matchUser)
+        {
+            try
+            {
+                var query = _dataContext.Matches.Where(x => x.State != (int)MatchStateEnum.inititated && x.Status == (int)StatusEnum.enable && (x.User.Equals(ObjectId.Parse(user)) && x.MatchedUser.Equals(ObjectId.Parse(matchUser)) || x.MatchedUser.Equals(ObjectId.Parse(user)) && x.User.Equals(ObjectId.Parse(matchUser))));
+
+                var _result = await query.FirstOrDefaultAsync();
+
+                if (_result == null) return new BooleanReturnDto
+                {
+                    Status = false
+                };
+
+                return new BooleanReturnDto
+                {
+                    Status = true,
+                    Data = _result
+                };
+            }
+            catch (Exception)
+            {
+                return new BooleanReturnDto
+                {
+                    Status = false
+                };
+            }
+        }
+
+        public async Task<BooleanReturnDto> CheckIfUserSendMatchRequest(string user, string matchUser, int type = (int)MatchStateEnum.inititated)
         {
             try
             {
@@ -42,17 +81,35 @@ namespace API.Services
 
                 var _result = await query.FirstOrDefaultAsync();
 
-                if (_result == null) return false;
+                if (_result == null) return new BooleanReturnDto
+                {
+                    Status = false
+                };
 
-                return true;
+                if (_result.State != type)
+                {
+                    return new BooleanReturnDto
+                    {
+                        Status = false
+                    };
+                }
+
+                return new BooleanReturnDto
+                {
+                    Status = true,
+                    Data = _result
+                };
             }
             catch (Exception)
             {
-                return false;
+                return new BooleanReturnDto
+                {
+                    Status = false
+                };
             }
         }
 
-        public async Task<bool> CheckIfUserReceivedMatchRequest(string user, string matchUser, int type = (int)MatchStateEnum.inititated)
+        public async Task<BooleanReturnDto> CheckIfUserReceivedMatchRequest(string user, string matchUser, int type = (int)MatchStateEnum.inititated)
         {
             try
             {
@@ -60,18 +117,31 @@ namespace API.Services
 
                 var _result = await query.FirstOrDefaultAsync();
 
-                if (_result == null) return false;
+                if (_result == null) return new BooleanReturnDto
+                {
+                    Status = false
+                };
 
                 if (_result.State != type)
                 {
-                    return false;
+                    return new BooleanReturnDto
+                    {
+                        Status = false
+                    };
                 }
 
-                return true;
+                return new BooleanReturnDto
+                {
+                    Status = true,
+                    Data = _result
+                };
             }
             catch (Exception)
             {
-                return false;
+                return new BooleanReturnDto
+                {
+                    Status = false
+                }; ;
             }
         }
     }

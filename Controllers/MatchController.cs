@@ -6,6 +6,7 @@ using API.Interfaces;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using MongoDB.Bson;
 
 namespace API.Controllers
 {
@@ -38,20 +39,38 @@ namespace API.Controllers
         {
             try
             {
-                if (await _matchService.CheckIfUserReceivedMatchRequest(_userService.GetConnectedUser(User), data.MatchedUser, (int)MatchStateEnum.rejected))
+                string userId = _userService.GetConnectedUser(User);
+
+                if ((await _matchService.CheckIfMatchRequestExist(userId, data.MatchedUser)).Status) return BadRequest("User match request already exists");
+                if ((await _matchService.CheckIfUserSendMatchRequest(userId, data.MatchedUser, (int)MatchStateEnum.inititated)).Status)
                 {
-                    return BadRequest("A previous request was rejected");
+                    return BadRequest("A previous request was already sent");
                 }
 
-                if (await _matchService.CheckIfUserReceivedMatchRequest(_userService.GetConnectedUser(User), data.MatchedUser, (int)MatchStateEnum.approved))
+                BooleanReturnDto receivedRequest = await _matchService.CheckIfUserReceivedMatchRequest(userId, data.MatchedUser, (int)MatchStateEnum.inititated);
+
+                if (receivedRequest.Status)
                 {
-                    return Ok("A previous request was approved");
+                    if (receivedRequest?.Data != null)
+                    {
+                        AppMatch currentRequest = receivedRequest.Data;
+                        currentRequest.State = (int)MatchStateEnum.approved;
+                        await _dataContext.SaveChangesAsync();
+
+                        var rs = _mapper.Map<MatchesResultDto>(currentRequest);
+                        return Ok(rs);
+                    }
                 }
 
-                if (await _matchService.CheckIfUserReceivedMatchRequest(_userService.GetConnectedUser(User), data.MatchedUser, (int)MatchStateEnum.inititated))
-                {
-                    
-                }
+                var newMatch = _mapper.Map<AppMatch>(data);
+                newMatch.User = ObjectId.Parse(userId);
+                newMatch.State = (int)MatchStateEnum.inititated;
+
+                _dataContext.Add(newMatch);
+                await _dataContext.SaveChangesAsync();
+
+                var result = _mapper.Map<MatchesResultDto>(newMatch);
+                return Ok(result);
             }
             catch (Exception e)
             {

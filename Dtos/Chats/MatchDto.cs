@@ -33,4 +33,10 @@ namespace API.DTOs
         public required int Skip { get; set; }
         public required int Total { get; set; }
     }
+
+    public class BooleanReturnDto
+    {
+        public required bool Status { get; set; }
+        public AppMatch? Data { get; set; }
+    }
 }

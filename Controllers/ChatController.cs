@@ -35,7 +35,7 @@ namespace API.Controllers
         {
             try
             {
-                if (!await _matchService.CheckIfUserIsMatch(_userService.GetConnectedUser(User), data.Receiver.ToString())) return BadRequest("You must be matching with this user to send a message");
+                if (!(await _matchService.CheckIfUserIsMatch(_userService.GetConnectedUser(User), data.Receiver.ToString())).Status) return BadRequest("You must be matching with this user to send a message");
 
                 var newChat = _mapper.Map<AppChat>(data);
                 newChat.MessageType = (int)EnumMessageType.text;
