@@ -84,7 +84,7 @@ namespace API.Controllers
             };
             await _emailsCommon.SendMail(data_email);
 
-            return finalresult;
+            return Ok(finalresult);
         }
 
         [AllowAnonymous]
@@ -97,36 +97,42 @@ namespace API.Controllers
 
                 if (result == null) Unauthorized("Invalid Login / Password, User not found");
 
-#pragma warning disable CS8602 // Dereference of a possibly null reference.
-                using var hmac = new HMACSHA512(result.PasswordSalt);
-#pragma warning restore CS8602 // Dereference of a possibly null reference.
-
-                var computedHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(data.Password));
-
-                for (int i = 0; i < computedHash.Length; i++)
+                if (result?.PasswordSalt != null)
                 {
-                    if (computedHash[i] != result.PasswordHash[i]) return Unauthorized("Invalid Login / Password, User not found");
+                    using var hmac = new HMACSHA512(result.PasswordSalt);
+
+                    var computedHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(data.Password));
+
+                    for (int i = 0; i < computedHash.Length; i++)
+                    {
+                        if (computedHash[i] != result.PasswordHash[i]) return Unauthorized("Invalid Login / Password, User not found");
+                    }
+
+                    var finalresult = _mapper.Map<ResultloginDto>(result);
+
+                    if (result.Status == (int)StatusEnum.disable) return Ok("Your account is disabled. Please Contact the admin");
+
+                    var data_email = new EmailRequestDto
+                    {
+                        ToEmail = result?.Email ?? "",
+                        ToName = result?.FirstName ?? "",
+                        SubTitle = "Login Attempts",
+                        ReplyToEmail = "",
+                        Subject = "Login Attempts",
+                        Body = _emailsCommon.UserLoginBody(finalresult),
+                        Attachments = { }
+                    };
+                    await _emailsCommon.SendMail(data_email);
+
+                    finalresult.Token = _tokenService.CreateToken(result?.Id.ToString() ?? "", result?.Role ?? 0);
+
+                    return Ok(finalresult);
+                }
+                else
+                {
+                    return BadRequest("An error occured or user not found");
                 }
 
-                var finalresult = _mapper.Map<ResultloginDto>(result);
-
-                if (result.Status == (int)StatusEnum.disable) return Ok("Your account is disabled. Please Contact the admin");
-
-                var data_email = new EmailRequestDto
-                {
-                    ToEmail = result?.Email ?? "",
-                    ToName = result?.FirstName ?? "",
-                    SubTitle = "Login Attempts",
-                    ReplyToEmail = "",
-                    Subject = "Login Attempts",
-                    Body = _emailsCommon.UserLoginBody(finalresult),
-                    Attachments = { }
-                };
-                await _emailsCommon.SendMail(data_email);
-
-                finalresult.Token = _tokenService.CreateToken(result?.Id.ToString() ?? "", result?.Role ?? 0);
-
-                return finalresult;
             }
             catch (Exception e)
             {

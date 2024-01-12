@@ -80,7 +80,7 @@ namespace API.Controllers
         }
 
         [HttpGet("")]
-        public async Task<ActionResult<IEnumerable<MatchesPaginateResultDto>>> GetUserMatches(int skip = 0, int limit = 0, string sort = "desc")
+        public async Task<ActionResult<IEnumerable<MatchesPaginateResultDto>>> GetUserMatches(int skip = 0, int limit = 50, string sort = "desc")
         {
             try
             {
