@@ -28,7 +28,7 @@ namespace API.DTOs
 
     public class MatchesPaginateResultDto
     {
-        public required IEnumerable<MessageResultDto> Data { get; set; }
+        public required IEnumerable<MatchesResultDto> Data { get; set; }
         public required int Limit { get; set; }
         public required int Skip { get; set; }
         public required int Total { get; set; }

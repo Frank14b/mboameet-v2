@@ -6,6 +6,7 @@ using API.Interfaces;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using MongoDB.Bson;
 
 namespace API.Controllers
@@ -75,6 +76,43 @@ namespace API.Controllers
             catch (Exception e)
             {
                 return BadRequest("An error occurred when trying to add " + e);
+            }
+        }
+
+        [HttpGet("")]
+        public async Task<ActionResult<IEnumerable<MatchesPaginateResultDto>>> GetUserMatches(int skip = 0, int limit = 0, string sort = "desc")
+        {
+            try
+            {
+                string userId = _userService.GetConnectedUser(User);
+
+                var query = _dataContext.Matches.Where(m => m.Status == (int)StatusEnum.enable && m.State == (int)MatchStateEnum.approved && (m.User.ToString() == userId || m.MatchedUser.ToString() == userId));
+
+                IQueryable<AppMatch> orderedQuery;
+                if (sort == "desc")
+                {
+                    orderedQuery = query.OrderByDescending(x => x.CreatedAt);
+                }
+                else
+                {
+                    orderedQuery = query.OrderBy(x => x.CreatedAt);
+                }
+
+                var _result = await orderedQuery.Skip(skip).Take(limit).ToListAsync();
+                var result = _mapper.Map<IEnumerable<MatchesResultDto>>(_result);
+                var matches = new MatchesPaginateResultDto
+                {
+                    Data = result,
+                    Limit = limit,
+                    Skip = skip,
+                    Total = query.Count()
+                };
+
+                return Ok(matches);
+            }
+            catch (Exception e)
+            {
+                return BadRequest("An error occurred or no matches found " + e);
             }
         }
     }
