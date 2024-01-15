@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using MongoDB.Bson.Serialization.Attributes;
 using MongoDB.Bson;
+using API.DTOs;
 
 namespace API.Entities
 {
@@ -42,6 +43,8 @@ namespace API.Entities
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public DateTime UpdatedAt { get; set; }
+
+        public bool Verified { get; set; } = false;
     }
 
     public enum RoleEnum
@@ -49,12 +52,5 @@ namespace API.Entities
         user = 2, // Properties Admin
         suadmin = 1, // Super admin 
         custom = 3 // Other User 
-    }
-
-    public enum StatusEnum
-    {
-        disable = 0,
-        enable = 1,
-        delete = 2
     }
 }

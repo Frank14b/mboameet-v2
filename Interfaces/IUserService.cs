@@ -1,4 +1,6 @@
 using System.Security.Claims;
+using API.DTOs;
+using API.Entities;
 
 namespace API.Interfaces
 {
@@ -7,5 +9,7 @@ namespace API.Interfaces
         string GetConnectedUser(ClaimsPrincipal User);
 
         bool IsUserConnected(ClaimsPrincipal User);
+
+        Task<bool> IsUserAlreadyExist(CreateUserDto data);
     }
 }

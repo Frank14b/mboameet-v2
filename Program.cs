@@ -9,6 +9,7 @@ using API.Data;
 using MongoDB.Driver;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using API.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -96,6 +97,9 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
+app.UseMiddleware<ExceptionMiddleware>();
+app.UseMiddleware<RoleAccessMiddleware>();
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -107,6 +111,7 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 // app.UseStaticFiles();
 // app.UseRouting();
+app.UseAuthentication();
 app.UseAuthorization();
 // app.MapRazorPages();
 app.MapControllers();

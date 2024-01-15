@@ -10,7 +10,7 @@ using MongoDB.Bson;
 
 namespace API.Controllers
 {
-    [Authorize(Policy = "IsUser")]
+    // [Authorize(Policy = "IsUser")]
     [Route("api/v1/chats")]
     public class ChatController : BaseApiController
     {

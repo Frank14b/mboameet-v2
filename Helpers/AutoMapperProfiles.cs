@@ -15,7 +15,7 @@ namespace API.Helpers
             CreateMap<SendMessageDto, AppChat>();
             CreateMap<AddMatchDto, AppMatch>();
             CreateMap<AppMatch, MatchesResultDto>();
-            // CreateMap<UpdateRolesDto, AppRole>();
+            CreateMap<CreateUserDto, AppUser>();
             // CreateMap<AppRole, RoleResultDtos>();
             // CreateMap<DeleteRolesDto, AppRole>();
             // CreateMap<DeleteAccessDto, AppAcces>();

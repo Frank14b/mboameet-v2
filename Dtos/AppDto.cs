@@ -8,4 +8,11 @@ namespace API.DTOs
         public AppMatch? Data { get; set; }
         public string? Message { get; set; }
     }
+
+    public enum StatusEnum
+    {
+        disable = 0,
+        enable = 1,
+        delete = 2
+    }
 }

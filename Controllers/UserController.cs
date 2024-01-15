@@ -16,7 +16,7 @@ using AutoMapper;
 
 namespace API.Controllers
 {
-    [Authorize(Policy = "IsUser")]
+    // [Authorize(Policy = "IsUser")]
     [Route("/api/v1/users")]
     public class UsersController : BaseApiController
     {
@@ -60,7 +60,6 @@ namespace API.Controllers
                 Age = 18,
                 Role = (int)RoleEnum.user,
                 Status = (int)StatusEnum.enable,
-                CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow,
             };
 

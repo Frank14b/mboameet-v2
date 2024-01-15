@@ -121,4 +121,21 @@ namespace API.DTOs
 
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
     }
+
+    public class CreateUserDto
+    {
+        [Required]
+        [MinLength(3)]
+        public required string Username { get; set; }
+
+        [Required]
+        [MinLength(3)]
+        public string? Firstname { get; set; }
+
+        public string? Lastname { get; set; }
+
+        [Required]
+        [EmailAddress]
+        public string? Email { get; set; }
+    }
 }

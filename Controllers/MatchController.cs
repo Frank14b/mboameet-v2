@@ -11,7 +11,7 @@ using MongoDB.Bson;
 
 namespace API.Controllers
 {
-    [Authorize(Policy = "IsUser")]
+    // [Authorize(Policy = "IsUser")]
     [Route("/api/v1/matches")]
     public class MatchController : BaseApiController
     {
