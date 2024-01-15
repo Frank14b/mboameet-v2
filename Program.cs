@@ -43,7 +43,7 @@ var connectionString = builder.Configuration["MONGODB_URI"];
 
 if (connectionString == null)
 {
-    Console.WriteLine("You must set your 'MONGODB_URI' environment variable. To learn how to set it, see https://www.mongodb.com/docs/drivers/csharp/current/quick-start/#set-your-connection-string");
+    Console.WriteLine("You must set your 'MONGODB_URI' environment variable.");
     Environment.Exit(0);
 }
 
@@ -97,22 +97,26 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-app.UseMiddleware<ExceptionMiddleware>();
-app.UseMiddleware<RoleAccessMiddleware>();
+// app.UseMiddleware<ExceptionMiddleware>();
+// app.UseMiddleware<RoleAccessMiddleware>();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "v1.0.0");
+    });
     app.UseCors(x => x.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin());
 }
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.UseHttpsRedirection();
 // app.UseStaticFiles();
 // app.UseRouting();
-app.UseAuthentication();
-app.UseAuthorization();
 // app.MapRazorPages();
 app.MapControllers();
 app.Run();

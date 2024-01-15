@@ -16,7 +16,7 @@ using AutoMapper;
 
 namespace API.Controllers
 {
-    // [Authorize(Policy = "IsUser")]
+    [Authorize(Policy = "IsUser")]
     [Route("/api/v1/users")]
     public class UsersController : BaseApiController
     {
@@ -142,11 +142,18 @@ namespace API.Controllers
         [HttpGet("")]
         public async Task<ActionResult<IEnumerable<ResultAllUserDto>>> GetUsers()
         {
-            var users = await _context.Users.Where(x => x.Role != (int)RoleEnum.suadmin && x.Status != (int)StatusEnum.delete).ToListAsync();
+            try
+            {
+                var users = await _context.Users.Where(x => x.Role != (int)RoleEnum.suadmin && x.Status != (int)StatusEnum.delete).ToListAsync();
 
-            var result = _mapper.Map<IEnumerable<ResultAllUserDto>>(users);
+                var result = _mapper.Map<IEnumerable<ResultAllUserDto>>(users);
 
-            return Ok(result);
+                return Ok(result);
+            }
+            catch (Exception e)
+            {
+                return BadRequest("An error occured or user not found " + e);
+            }
         }
 
         [HttpPost("validate-token")]

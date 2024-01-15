@@ -31,12 +31,12 @@ namespace API.Middleware
                 }
                 else
                 {
-                    await context.Response.WriteAsync("An error occured or not have access");
+                    await context.Response.WriteAsync("Not have access");
                 }
             }
-            catch (Exception)
+            catch (Exception e)
             {
-                await context.Response.WriteAsync("An error occured or not have access");
+                await context.Response.WriteAsync("An error occured or not have access " + e);
             }
         }
 
@@ -45,7 +45,7 @@ namespace API.Middleware
             try
             {
                 ClaimsPrincipal currentUser = context.User;
-                var userid = int.Parse(currentUser.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "");
+                var userid = currentUser.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "";
 
                 // var userData = _context.UserProperties.Where((x) => x.UserId == userid).FirstOrDefault();
 

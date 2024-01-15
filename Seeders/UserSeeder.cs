@@ -1,4 +1,5 @@
 using API.Data;
+using API.DTOs;
 using API.Entities;
 using System.Security.Cryptography;
 using System.Text;
@@ -40,7 +41,7 @@ namespace API.Seeders
                     _context.SaveChanges();
                 }
             }
-            catch (System.Exception)
+            catch (Exception)
             { }
         }
     }

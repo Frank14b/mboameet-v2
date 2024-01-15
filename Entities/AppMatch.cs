@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using API.DTOs;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 
@@ -15,6 +16,8 @@ namespace API.Entities
         [BsonId]
         [BsonRepresentation(BsonType.ObjectId)]
         public required ObjectId User { get; set; }
+
+        // public List<AppUser> Users { get; set; } = new();
 
         [BsonId]
         [BsonRepresentation(BsonType.ObjectId)]
