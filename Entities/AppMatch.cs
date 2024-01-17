@@ -10,15 +10,17 @@ namespace API.Entities
     public class AppMatch
     {
         [BsonId]
-        [BsonRepresentation(BsonType.ObjectId)]
+        // [BsonRepresentation(BsonType.ObjectId)]
         public ObjectId Id { get; set; }
 
         // [BsonId]
-        public required ObjectId User { get; set; }
+        public required ObjectId UserId { get; set; }
 
-        // public List<AppUser> Users { get; set; } = new();
+        public AppUser? User { get; set; }
         // [BsonId]
-        public required ObjectId MatchedUser { get; set; }
+        public required ObjectId MatchedUserId { get; set; }
+
+        public AppUser? MatchedUser { get; set; }
 
         [EnumDataType(typeof(MatchStateEnum))]
         public int State { get; set; } = (int)MatchStateEnum.inititated;

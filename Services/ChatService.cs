@@ -21,7 +21,7 @@ namespace API.Services
         {
             try
             {
-                var query = _dataContext.Matches.Where(x => x.State == (int)MatchStateEnum.approved && x.Status == (int)StatusEnum.enable && (x.User.Equals(ObjectId.Parse(user)) && x.MatchedUser.Equals(ObjectId.Parse(matchUser)) || x.MatchedUser.Equals(ObjectId.Parse(user)) && x.User.Equals(ObjectId.Parse(matchUser))));
+                var query = _dataContext.Matches.Where(x => x.State == (int)MatchStateEnum.approved && x.Status == (int)StatusEnum.enable && (x.UserId.Equals(ObjectId.Parse(user)) && x.MatchedUserId.Equals(ObjectId.Parse(matchUser)) || x.MatchedUserId.Equals(ObjectId.Parse(user)) && x.UserId.Equals(ObjectId.Parse(matchUser))));
 
                 var _result = await query.FirstOrDefaultAsync();
 

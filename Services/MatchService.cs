@@ -22,7 +22,7 @@ namespace API.Services
         {
             try
             {
-                var query = _dataContext.Matches.Where(x => x.State == (int)MatchStateEnum.approved && x.Status == (int)StatusEnum.enable && (x.User.Equals(ObjectId.Parse(user)) && x.MatchedUser.Equals(ObjectId.Parse(matchUser)) || x.MatchedUser.Equals(ObjectId.Parse(user)) && x.User.Equals(ObjectId.Parse(matchUser))));
+                var query = _dataContext.Matches.Where(x => x.State == (int)MatchStateEnum.approved && x.Status == (int)StatusEnum.enable && (x.UserId.Equals(ObjectId.Parse(user)) && x.MatchedUserId.Equals(ObjectId.Parse(matchUser)) || x.MatchedUserId.Equals(ObjectId.Parse(user)) && x.UserId.Equals(ObjectId.Parse(matchUser))));
 
                 var _result = await query.FirstOrDefaultAsync();
 
@@ -50,9 +50,9 @@ namespace API.Services
         {
             try
             {
-                var query = _dataContext.Matches.Where(x => x.State == (int)MatchStateEnum.inititated && x.Status == (int)StatusEnum.enable && (x.User.Equals(ObjectId.Parse(user)) && x.MatchedUser.Equals(ObjectId.Parse(matchUser)) || x.MatchedUser.Equals(ObjectId.Parse(user)) && x.User.Equals(ObjectId.Parse(matchUser))));
+                var query = _dataContext.Matches.Where(x => x.State == (int)MatchStateEnum.inititated && x.Status == (int)StatusEnum.enable && (x.UserId.Equals(ObjectId.Parse(user)) && x.MatchedUserId.Equals(ObjectId.Parse(matchUser)) || x.MatchedUserId.Equals(ObjectId.Parse(user)) && x.UserId.Equals(ObjectId.Parse(matchUser))));
 
-                // && (x.User.Equals(ObjectId.Parse(user)) && x.MatchedUser.Equals(ObjectId.Parse(matchUser)) || x.MatchedUser.Equals(ObjectId.Parse(user)) && x.User.Equals(ObjectId.Parse(matchUser)))
+                // && (x.User.Equals(ObjectId.Parse(user)) && x.MatchedUserId.Equals(ObjectId.Parse(matchUser)) || x.MatchedUserId.Equals(ObjectId.Parse(user)) && x.User.Equals(ObjectId.Parse(matchUser)))
 
                 var _result = await query.CountAsync();
 
@@ -117,7 +117,7 @@ namespace API.Services
         {
             try
             {
-                var query = _dataContext.Matches.Where(x => x.Status == (int)StatusEnum.enable && x.MatchedUser.Equals(ObjectId.Parse(user)) && x.User.Equals(ObjectId.Parse(matchUser)));
+                var query = _dataContext.Matches.Where(x => x.Status == (int)StatusEnum.enable && x.MatchedUserId.Equals(ObjectId.Parse(user)) && x.UserId.Equals(ObjectId.Parse(matchUser)));
 
                 var _result = await query.FirstOrDefaultAsync();
 
@@ -153,7 +153,7 @@ namespace API.Services
         {
             try
             {
-                var query = _dataContext.Matches.Where(m => m.User.ToString() == userId && m.Status == (int)StatusEnum.enable && m.State == (int)MatchStateEnum.inititated);
+                var query = _dataContext.Matches.Where(m => m.UserId.ToString() == userId && m.Status == (int)StatusEnum.enable && m.State == (int)MatchStateEnum.inititated);
                 var match = await query.FirstOrDefaultAsync();
 
                 return match;
@@ -168,7 +168,7 @@ namespace API.Services
         {
             try
             {
-                var query = _dataContext.Matches.Where(m => m.MatchedUser.ToString() == userId && m.Status == (int)StatusEnum.enable && m.State == (int)MatchStateEnum.inititated);
+                var query = _dataContext.Matches.Where(m => m.MatchedUserId.ToString() == userId && m.Status == (int)StatusEnum.enable && m.State == (int)MatchStateEnum.inititated);
                 var match = await query.FirstOrDefaultAsync();
 
                 return match;

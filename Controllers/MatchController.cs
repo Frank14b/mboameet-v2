@@ -42,13 +42,13 @@ namespace API.Controllers
             {
                 string userId = _userService.GetConnectedUser(User);
 
-                if ((await _matchService.CheckIfMatchRequestExist(userId, data.MatchedUser)).Status) return BadRequest("User match request already exists");
-                if ((await _matchService.CheckIfUserSendMatchRequest(userId, data.MatchedUser, (int)MatchStateEnum.inititated)).Status)
+                if ((await _matchService.CheckIfMatchRequestExist(userId, data.MatchedUserId)).Status) return BadRequest("User match request already exists");
+                if ((await _matchService.CheckIfUserSendMatchRequest(userId, data.MatchedUserId, (int)MatchStateEnum.inititated)).Status)
                 {
                     return BadRequest("A previous request was already sent");
                 }
 
-                BooleanReturnDto receivedRequest = await _matchService.CheckIfUserReceivedMatchRequest(userId, data.MatchedUser, (int)MatchStateEnum.inititated);
+                BooleanReturnDto receivedRequest = await _matchService.CheckIfUserReceivedMatchRequest(userId, data.MatchedUserId, (int)MatchStateEnum.inititated);
 
                 if (receivedRequest.Status)
                 {
@@ -65,8 +65,8 @@ namespace API.Controllers
 
                 var newMatch = new AppMatch
                 {
-                    MatchedUser = ObjectId.Parse(data.MatchedUser),
-                    User = ObjectId.Parse(userId),
+                    MatchedUserId = ObjectId.Parse(data.MatchedUserId),
+                    UserId = ObjectId.Parse(userId),
                 };
 
                 _dataContext.Add(newMatch);
@@ -88,7 +88,7 @@ namespace API.Controllers
             {
                 string userId = _userService.GetConnectedUser(User);
 
-                var query = _dataContext.Matches.Where(m => m.Status == (int)StatusEnum.enable && m.State == (int)MatchStateEnum.approved && (m.User.ToString() == userId || m.MatchedUser.ToString() == userId));
+                var query = _dataContext.Matches.Where(m => m.Status == (int)StatusEnum.enable && m.State == (int)MatchStateEnum.approved && (m.UserId.ToString() == userId || m.MatchedUserId.ToString() == userId));
 
                 IQueryable<AppMatch> orderedQuery;
                 if (sort == "desc")
@@ -100,7 +100,7 @@ namespace API.Controllers
                     orderedQuery = query.OrderBy(x => x.CreatedAt);
                 }
 
-                var _result = await orderedQuery.Skip(skip).Take(limit).ToListAsync(); //.Include(p => p.Users)
+                var _result = await orderedQuery.Skip(skip).Take(limit).Include(p => p.MatchedUser).ToListAsync(); //.Include(p => p.Users)
                 var result = _mapper.Map<IEnumerable<MatchesResultDto>>(_result);
                 var matches = new MatchesPaginateResultDto
                 {
@@ -163,7 +163,7 @@ namespace API.Controllers
                 return new BooleanReturnDto
                 {
                     Status = true,
-                    Message = "The provided request has been cancelled"
+                    Message = "The provided request has been " + action
                 };
             }
             catch (Exception e)

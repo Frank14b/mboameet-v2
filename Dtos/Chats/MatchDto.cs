@@ -6,16 +6,20 @@ namespace API.DTOs
     public class AddMatchDto
     {
         [Required]
-        public required string MatchedUser { get; set; }
+        public required string MatchedUserId { get; set; }
     }
 
     public class MatchesResultDto
     {
         public required string Id { get; set; }
 
-        public required string User { get; set; }
+        public required string UserId { get; set; }
 
-        public required string MatchedUser { get; set; }
+        public required string MatchedUserId { get; set; }
+
+        public required AppUser User { get; set; }
+
+        public AppUser? MatchedUser { get; set; }
 
         [EnumDataType(typeof(MatchStateEnum))]
         public required int State { get; set; }

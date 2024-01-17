@@ -10,7 +10,7 @@ namespace API.Entities
     public class AppUser
     {
         [BsonId]
-        [BsonRepresentation(BsonType.ObjectId)]
+        // [BsonRepresentation(BsonType.ObjectId)]
         public ObjectId Id { get; set; }
 
         [MinLength(3)]
