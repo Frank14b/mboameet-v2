@@ -11,23 +11,20 @@ namespace API.Entities
     {
         [BsonId]
         [BsonRepresentation(BsonType.ObjectId)]
-        public required ObjectId Id { get; set; }
+        public ObjectId Id { get; set; }
 
-        [BsonId]
-        [BsonRepresentation(BsonType.ObjectId)]
+        // [BsonId]
         public required ObjectId User { get; set; }
 
         // public List<AppUser> Users { get; set; } = new();
-
-        [BsonId]
-        [BsonRepresentation(BsonType.ObjectId)]
-        public ObjectId MatchedUser { get; set; }
+        // [BsonId]
+        public required ObjectId MatchedUser { get; set; }
 
         [EnumDataType(typeof(MatchStateEnum))]
-        public required int State { get; set; }
+        public int State { get; set; } = (int)MatchStateEnum.inititated;
 
         [EnumDataType(typeof(StatusEnum))]
-        public required int Status { get; set; }
+        public int Status { get; set; } = (int)StatusEnum.enable;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public DateTime UpdatedAt { get; set; }

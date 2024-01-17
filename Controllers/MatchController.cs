@@ -11,7 +11,7 @@ using MongoDB.Bson;
 
 namespace API.Controllers
 {
-    // [Authorize(Policy = "IsUser")]
+    [Authorize(Policy = "IsUser")]
     [Route("/api/v1/matches")]
     public class MatchController : BaseApiController
     {
@@ -63,9 +63,11 @@ namespace API.Controllers
                     }
                 }
 
-                var newMatch = _mapper.Map<AppMatch>(data);
-                newMatch.User = ObjectId.Parse(userId);
-                newMatch.State = (int)MatchStateEnum.inititated;
+                var newMatch = new AppMatch
+                {
+                    MatchedUser = ObjectId.Parse(data.MatchedUser),
+                    User = ObjectId.Parse(userId),
+                };
 
                 _dataContext.Add(newMatch);
                 await _dataContext.SaveChangesAsync();

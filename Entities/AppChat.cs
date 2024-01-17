@@ -28,11 +28,9 @@ namespace API.Entities
         public int Status { get; set; }
 
         [BsonId]
-        [BsonRepresentation(BsonType.ObjectId)]
         public ObjectId Sender { get; set; }
 
         [BsonId]
-        [BsonRepresentation(BsonType.ObjectId)]
         public ObjectId Receiver { get; set; }
 
         public List<string>? Files { get; set; }

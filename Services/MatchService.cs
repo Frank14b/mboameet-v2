@@ -50,11 +50,13 @@ namespace API.Services
         {
             try
             {
-                var query = _dataContext.Matches.Where(x => x.State != (int)MatchStateEnum.inititated && x.Status == (int)StatusEnum.enable && (x.User.Equals(ObjectId.Parse(user)) && x.MatchedUser.Equals(ObjectId.Parse(matchUser)) || x.MatchedUser.Equals(ObjectId.Parse(user)) && x.User.Equals(ObjectId.Parse(matchUser))));
+                var query = _dataContext.Matches.Where(x => x.State == (int)MatchStateEnum.inititated && x.Status == (int)StatusEnum.enable && (x.User.Equals(ObjectId.Parse(user)) && x.MatchedUser.Equals(ObjectId.Parse(matchUser)) || x.MatchedUser.Equals(ObjectId.Parse(user)) && x.User.Equals(ObjectId.Parse(matchUser))));
 
-                var _result = await query.FirstOrDefaultAsync();
+                // && (x.User.Equals(ObjectId.Parse(user)) && x.MatchedUser.Equals(ObjectId.Parse(matchUser)) || x.MatchedUser.Equals(ObjectId.Parse(user)) && x.User.Equals(ObjectId.Parse(matchUser)))
 
-                if (_result == null) return new BooleanReturnDto
+                var _result = await query.CountAsync();
+
+                if (_result == 0) return new BooleanReturnDto
                 {
                     Status = false
                 };
@@ -62,7 +64,7 @@ namespace API.Services
                 return new BooleanReturnDto
                 {
                     Status = true,
-                    Data = _result
+                    // Data = _result
                 };
             }
             catch (Exception)
@@ -78,7 +80,7 @@ namespace API.Services
         {
             try
             {
-                var query = _dataContext.Matches.Where(x => x.Status == (int)StatusEnum.enable && x.User.Equals(ObjectId.Parse(user)) && x.MatchedUser.Equals(ObjectId.Parse(matchUser)));
+                var query = _dataContext.Matches.Where(x => x.Status == (int)StatusEnum.enable);
 
                 var _result = await query.FirstOrDefaultAsync();
 
@@ -101,8 +103,9 @@ namespace API.Services
                     Data = _result
                 };
             }
-            catch (Exception)
+            catch (Exception e)
             {
+                Console.WriteLine(e);
                 return new BooleanReturnDto
                 {
                     Status = false
