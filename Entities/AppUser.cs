@@ -35,7 +35,8 @@ namespace API.Entities
 
         public int Age { get; set; }
 
-        // public List<AppBusiness> Business { get; set; } = new();
+        public ICollection<AppMatch>? Match { get; set; }
+
         // public List<AppUserProperty> UserProperties { get; set; } = new();
 
         public DateTime LastLogin { get; set; }

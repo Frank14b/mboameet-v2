@@ -1,6 +1,8 @@
 
 // using API.DTOs.Business;
 
+using API.Entities;
+
 namespace API.DTOs
 {
     public class ResultloginDto
@@ -51,6 +53,15 @@ namespace API.DTOs
         public int Age { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
+        public List<MatchesResultDto>? Match { get; set; }
+    }
+
+    public class ResultUsersPaginate
+    {
+        public required IEnumerable<ResultAllUserDto> Data { get; set; }
+        public required int Limit { get; set; }
+        public required int Skip { get; set; }
+        public required int Total { get; set; }
     }
 
     public class TotalUsersDto

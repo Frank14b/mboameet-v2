@@ -26,8 +26,9 @@ namespace API.Controllers
         private readonly EmailsCommon _emailsCommon;
         private readonly IMapper _mapper;
         private readonly IConfiguration _configuration;
+        private readonly IUserService _userService;
 
-        public UsersController(DataContext context, ITokenService tokenService, IMapper mapper, IConfiguration configuration, IMailService mailService)
+        public UsersController(DataContext context, ITokenService tokenService, IMapper mapper, IConfiguration configuration, IMailService mailService, IUserService userService)
         {
             _context = context;
             _tokenService = tokenService;
@@ -35,6 +36,7 @@ namespace API.Controllers
             _userCommon = new UsersCommon(context);
             _configuration = configuration;
             _emailsCommon = new EmailsCommon(mailService);
+            _userService = userService;
         }
 
         [AllowAnonymous]
@@ -140,27 +142,58 @@ namespace API.Controllers
         }
 
         [HttpGet("")]
-        public async Task<ActionResult<IEnumerable<ResultAllUserDto>>> GetUsers()
+        public async Task<ActionResult<IEnumerable<ResultUsersPaginate>>> GetUsers(int skip = 0, int limit = 50, string sort = "desc")
         {
             try
             {
-                var users = await _context.Users.Where(x => x.Role != (int)RoleEnum.suadmin && x.Status != (int)StatusEnum.delete).ToListAsync();
+                var query = _context.Users
+                    .Where(x => x.Role != (int)RoleEnum.suadmin && x.Status != (int)StatusEnum.delete);
 
+                // Apply sorting directly in the query
+                query = sort == "desc"
+                    ? query.OrderByDescending(x => x.CreatedAt)
+                    : query.OrderBy(x => x.CreatedAt);
+
+                // Include matches in a single query for better performance
+                var users = await query
+                    // .Include(u => u.Match.OrderByDescending(m => m.CreatedAt).Take(10))
+                    .Skip(skip)
+                    .Take(limit)
+                    .ToListAsync();
+
+                foreach (var user in users)
+                {
+                    user.Match = await _context.Matches
+                        .Where(m => m.UserId == user.Id)
+                        .OrderByDescending(m => m.CreatedAt)
+                        .Take(5)
+                        .ToListAsync();
+                }
+
+                // Map to DTO after fetching with included matches
                 var result = _mapper.Map<IEnumerable<ResultAllUserDto>>(users);
 
-                return Ok(result);
+                // Count before applying pagination for accuracy
+                var totalCount = await query.CountAsync();
+
+                return Ok(new ResultUsersPaginate
+                {
+                    Data = result,
+                    Limit = limit,
+                    Skip = skip,
+                    Total = totalCount
+                });
             }
             catch (Exception e)
             {
-                return BadRequest("An error occured or user not found " + e);
+                return BadRequest("An error occurred or user not found " + e); // Log exception details separately
             }
         }
 
         [HttpPost("validate-token")]
         public async Task<ActionResult<ResultAllUserDto>> ValidateToken()
         {
-            ClaimsPrincipal currentUser = this.User;
-            var id = currentUser.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "";
+            string id = _userService.GetConnectedUser(User);
 
             if (!await _userCommon.UserIdExist(id)) return BadRequest("User not found");
 

@@ -100,7 +100,7 @@ namespace API.Controllers
                     orderedQuery = query.OrderBy(x => x.CreatedAt);
                 }
 
-                var _result = await orderedQuery.Skip(skip).Take(limit).Include(p => p.MatchedUser).ToListAsync(); //.Include(p => p.Users)
+                var _result = await orderedQuery.Skip(skip).Take(limit).ToListAsync(); //.Include(p => p.Users)
                 var result = _mapper.Map<IEnumerable<MatchesResultDto>>(_result);
                 var matches = new MatchesPaginateResultDto
                 {

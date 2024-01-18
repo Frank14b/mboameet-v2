@@ -20,7 +20,7 @@ namespace API.Entities
         // [BsonId]
         public required ObjectId MatchedUserId { get; set; }
 
-        public AppUser? MatchedUser { get; set; }
+        // public AppUser? MatchedUser { get; set; }
 
         [EnumDataType(typeof(MatchStateEnum))]
         public int State { get; set; } = (int)MatchStateEnum.inititated;
