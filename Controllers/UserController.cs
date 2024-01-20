@@ -133,7 +133,6 @@ namespace API.Controllers
                 {
                     return BadRequest("An error occured or user not found");
                 }
-
             }
             catch (Exception e)
             {
