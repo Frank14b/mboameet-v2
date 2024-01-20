@@ -1,3 +1,4 @@
+using System.Net.Mime;
 using Internal;
 using System;
 using System.Text.RegularExpressions;
@@ -27,7 +28,7 @@ namespace API.Controllers
         private readonly IMapper _mapper;
         private readonly IMatchService _matchService;
         private readonly IUserService _userService;
-        private IMemoryCache _memoryCache;
+        private readonly IMemoryCache _memoryCache;
 
         public MatchController(
             DataContext context,
@@ -104,8 +105,6 @@ namespace API.Controllers
 
                 var cachedMatches = _memoryCache.Get(cacheKey);
 
-                var cacheTime = new MemoryCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5)};
-
                 if(cachedMatches != null) {
                     return Ok(cachedMatches);
                 }
@@ -137,9 +136,8 @@ namespace API.Controllers
                     Total = totalMatches
                 };
 
-                // Cache both raw entities and final DTOs for flexibility
-                 _memoryCache.Set(cacheKey, response, cacheTime);
-                 _memoryCache.Set(cacheKey + "_entities", cacheTime);
+                _memoryCache.Set(cacheKey, response, new MemoryCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5)});
+                _memoryCache.Set(cacheKey + "_entities", result, new MemoryCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5)});
 
                 return Ok(response);
             }

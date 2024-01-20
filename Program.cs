@@ -87,6 +87,7 @@ builder.Services.AddScoped<IMailService, MailService>();
 builder.Services.AddScoped<IChatService, ChatService>();
 builder.Services.AddScoped<IMatchService, MatchService>();
 builder.Services.AddScoped<IUserService, UserService>();
+// builder.Services.AddScoped<IMemoryService, MemoryService>();
 
 builder.Services.AddMemoryCache();
 

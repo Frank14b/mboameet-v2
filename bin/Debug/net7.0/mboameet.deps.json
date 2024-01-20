@@ -16,6 +16,7 @@
           "Microsoft.EntityFrameworkCore.Design": "7.0.14",
           "Microsoft.Extensions.Caching.Memory": "7.0.0",
           "Microsoft.Extensions.Caching.StackExchangeRedis": "7.0.15",
+          "Microsoft.Extensions.Logging": "7.0.0",
           "MimeKit": "4.3.0",
           "MongoDB.Driver.Core": "2.23.1",
           "MongoDB.EntityFrameworkCore": "7.0.0-preview.1",

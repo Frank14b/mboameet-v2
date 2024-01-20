@@ -27,16 +27,25 @@ namespace API.Controllers
         private readonly IMapper _mapper;
         private readonly IConfiguration _configuration;
         private readonly IUserService _userService;
+        public readonly ILogger _logger;
 
-        public UsersController(DataContext context, ITokenService tokenService, IMapper mapper, IConfiguration configuration, IMailService mailService, IUserService userService)
+        public UsersController(
+            DataContext context, 
+            ITokenService tokenService, 
+            IMapper mapper, 
+            IConfiguration configuration, 
+            IMailService mailService, 
+            IUserService userService,
+            ILogger<UsersController> logger)
         {
             _context = context;
             _tokenService = tokenService;
             _mapper = mapper;
             _userCommon = new UsersCommon(context);
             _configuration = configuration;
-            _emailsCommon = new EmailsCommon(mailService);
+            _emailsCommon = new EmailsCommon(mailService, logger);
             _userService = userService;
+            _logger = logger;
         }
 
         [AllowAnonymous]
@@ -123,7 +132,7 @@ namespace API.Controllers
                         Body = _emailsCommon.UserLoginBody(finalresult),
                         Attachments = { }
                     };
-                    await _emailsCommon.SendMail(data_email);
+                    var responseEmail = await _emailsCommon.SendMail(data_email);
 
                     finalresult.Token = _tokenService.CreateToken(result?.Id.ToString() ?? "", result?.Role ?? 0);
 
