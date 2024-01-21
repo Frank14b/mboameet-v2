@@ -11,5 +11,9 @@ namespace API.Interfaces
         bool IsUserConnected(ClaimsPrincipal User);
 
         Task<bool> IsUserAlreadyExist(CreateUserDto data);
+
+        Task<AppAuthToken?> CreateAuthToken(CreateAuthTokenDto data);
+
+        Task<AppUser?> GetUserByEmail(string email);
     }
 }

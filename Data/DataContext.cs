@@ -14,6 +14,8 @@ namespace API.Data
 
         public DbSet<AppMatch> Matches { get; set; }
 
+        public DbSet<AppAuthToken> AuthTokens { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
         

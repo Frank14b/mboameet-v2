@@ -132,7 +132,7 @@ namespace API.Controllers
                         Body = _emailsCommon.UserLoginBody(finalresult),
                         Attachments = { }
                     };
-                    var responseEmail = await _emailsCommon.SendMail(data_email);
+                    await _emailsCommon.SendMail(data_email);
 
                     finalresult.Token = _tokenService.CreateToken(result?.Id.ToString() ?? "", result?.Role ?? 0);
 
@@ -210,6 +210,36 @@ namespace API.Controllers
             var result = _mapper.Map<ResultAllUserDto>(user);
 
             return Ok(result);
+        }
+
+        [HttpPost("forget-password")]
+        public async Task<ActionResult<ResultAllUserDto>> fogetPassword(ForgetPasswordDto data) {
+            try
+            {
+                AppUser? user = await _userService.GetUserByEmail(data.Email);
+
+                if(user == null) return BadRequest("The provided email is not found");
+
+                var otpData = await _userService.CreateAuthToken(new CreateAuthTokenDto {
+                    Email = user.Email,
+                    UserId = null
+                });
+
+                await _emailsCommon.SendMail(new EmailRequestDto
+                {
+                    ToEmail = user?.Email ?? "",
+                    ToName = user?.FirstName ?? "",
+                    SubTitle = "Forget Password",
+                    ReplyToEmail = "",
+                    Subject = "Forget Password Request",
+                    Body = _emailsCommon.UserLoginBody(otpData),
+                    Attachments = { }
+                });
+            }
+            catch (Exception e)
+            {
+                return BadRequest("An error occured");
+            }
         }
     }
 }

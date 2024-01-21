@@ -11,12 +11,10 @@ namespace API.Commons
     public class UsersCommon : ControllerBase
     {
         private DataContext _context;
-        // private BusinessCommon _businessCommon;
 
         public UsersCommon(DataContext context)
         {
             _context = context;
-            // this._businessCommon = new BusinessCommon(context);
         }
 
         public async Task<bool> UserIdExist(string id)
