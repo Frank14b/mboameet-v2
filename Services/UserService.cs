@@ -12,13 +12,15 @@ namespace API.Services
     public class UserService : IUserService
     {
         private readonly DataContext _dataContext;
+        public readonly ILogger _logger;
 
         public UserService(DataContext dataContext)
         {
             _dataContext = dataContext;
+            _logger = logger;
         }
 
-        public string GetConnectedUser(ClaimsPrincipal User)
+        public string GetConnectedUser(ClaimsPrincipal User, ILogger logger)
         {
             try
             {
@@ -67,37 +69,41 @@ namespace API.Services
             }
         }
 
-        public async Task<AppAuthtoken?> CreateAuthToken (CreateAuthTokenDto data) {
+        public async Task<AppAuthtoken?> CreateAuthToken (CreateAuthTokenDto data) {    
             try
             {
                 if(data?.UserId == null && data?.Email == null) return null;
 
                 int otp = (int)(await GenerateAuthToken());
-                string token = Guid uniqueGuid = Guid.NewGuid();
+                string token = Guid uniqueGuid = Guid.NewGuid().ToString();
 
-                var data = new AppAuthtoken{
+                var authToken = new AppAuthtoken{
                     Otp = otp,
                     Token = token,
                     Email = data?.Email,
                     UserId = data?.UserId,
                     UsageType = data.UsageType
                 }
-                return data;
+
+                await _dataContext.AuthTokens.AddAsync(authToken);  // Add to database directly
+                await _dataContext.SaveChangesAsync();
+
+                return authToken;
             }
             catch (Exception)
             {
+                _logger.LogError(ex, "Failed to create auth token");
                 return null;
             }
         }
 
         private async Task<string> GenerateAuthToken() {
-            string otpCode = string.Join("", Enumerable.Range(0, 9)
-                      .Select(_ => RandomNumberGenerator.Create().GetBytes(1)[0].ToString()));
+            string otpCode = string.Concat("", Enumerable.Range(0, 9).Select(_ => RandomNumberGenerator.Create().GetBytes(1)[0]));
 
-            var query = await _dataContext.AuthTokens.Where(a => a.otp == otpCode).FirstAsync();
+            var existingToken = await _dataContext.AuthTokens.FirstOrDefaultAsync(a => a.Otp == (int)otpCode);
 
-            if(query != null) {
-                otpCode = await GenerateAuthToken();
+            if(existingToken != null) {
+                existingToken = await GenerateAuthToken();
             }
 
             return otpCode;
