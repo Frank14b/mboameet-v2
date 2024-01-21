@@ -1,3 +1,4 @@
+using System;
 using System.Data.Common;
 using System.Security.Claims;
 using API.Data;
@@ -12,15 +13,13 @@ namespace API.Services
     public class UserService : IUserService
     {
         private readonly DataContext _dataContext;
-        public readonly ILogger _logger;
 
         public UserService(DataContext dataContext)
         {
             _dataContext = dataContext;
-            _logger = logger;
         }
 
-        public string GetConnectedUser(ClaimsPrincipal User, ILogger logger)
+        public string GetConnectedUser(ClaimsPrincipal User)
         {
             try
             {
@@ -69,21 +68,21 @@ namespace API.Services
             }
         }
 
-        public async Task<AppAuthtoken?> CreateAuthToken (CreateAuthTokenDto data) {    
+        public async Task<AppAuthToken?> CreateAuthToken (CreateAuthTokenDto data) {    
             try
             {
                 if(data?.UserId == null && data?.Email == null) return null;
 
-                int otp = (int)(await GenerateAuthToken());
-                string token = Guid uniqueGuid = Guid.NewGuid().ToString();
+                string otp = await GenerateAuthToken();
+                string token = Guid.NewGuid().ToString();
 
-                var authToken = new AppAuthtoken{
-                    Otp = otp,
+                var authToken = new AppAuthToken{
+                    Otp = int.Parse(otp),
                     Token = token,
                     Email = data?.Email,
                     UserId = data?.UserId,
-                    UsageType = data.UsageType
-                }
+                    UsageType = data?.UsageType ?? 0
+                };
 
                 await _dataContext.AuthTokens.AddAsync(authToken);  // Add to database directly
                 await _dataContext.SaveChangesAsync();
@@ -92,18 +91,17 @@ namespace API.Services
             }
             catch (Exception)
             {
-                _logger.LogError(ex, "Failed to create auth token");
                 return null;
             }
         }
 
         private async Task<string> GenerateAuthToken() {
-            string otpCode = string.Concat("", Enumerable.Range(0, 9).Select(_ => RandomNumberGenerator.Create().GetBytes(1)[0]));
+            string otpCode = string.Concat("", Enumerable.Range(0, 9).Select(_ => RandomNumberGenerator.GetBytes(1)[0]));
 
-            var existingToken = await _dataContext.AuthTokens.FirstOrDefaultAsync(a => a.Otp == (int)otpCode);
+            var existingToken = await _dataContext.AuthTokens.FirstOrDefaultAsync(a => a.Otp == int.Parse(otpCode));
 
             if(existingToken != null) {
-                existingToken = await GenerateAuthToken();
+                otpCode = await GenerateAuthToken();
             }
 
             return otpCode;
@@ -111,7 +109,7 @@ namespace API.Services
 
         public async Task<AppUser?> GetUserByEmail(string email)
         {
-            return await _context.Users.AnyAsync((x) => x.Email != null && x.Email.ToLower() == email.ToLower());
+            return await _dataContext.Users.FirstOrDefaultAsync((x) => x.Email != null && x.Email.ToLower() == email.ToLower());
         }
     }
 }

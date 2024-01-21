@@ -213,7 +213,7 @@ namespace API.Controllers
         }
 
         [HttpPost("forget-password")]
-        public async Task<ActionResult<ResultAllUserDto>> fogetPassword(ForgetPasswordDto data) {
+        public async Task<ActionResult<ResultForgetPasswordDto>> fogetPassword(ForgetPasswordDto data) {
             try
             {
                 AppUser? user = await _userService.GetUserByEmail(data.Email);
@@ -224,21 +224,29 @@ namespace API.Controllers
                     Email = user.Email,
                     UserId = null
                 });
+                
+                if(otpData == null) return BadRequest("An error occured please retry later");
 
-                await _emailsCommon.SendMail(new EmailRequestDto
-                {
-                    ToEmail = user?.Email ?? "",
-                    ToName = user?.FirstName ?? "",
-                    SubTitle = "Forget Password",
-                    ReplyToEmail = "",
-                    Subject = "Forget Password Request",
-                    Body = _emailsCommon.UserLoginBody(otpData),
-                    Attachments = { }
+                // await _emailsCommon.SendMail(new EmailRequestDto
+                // {
+                //     ToEmail = user?.Email ?? "",
+                //     ToName = user?.FirstName ?? "",
+                //     SubTitle = "Forget Password",
+                //     ReplyToEmail = "",
+                //     Subject = "Forget Password Request",
+                //     Body = _emailsCommon.UserLoginBody(otpData),
+                //     Attachments = { }
+                // });
+                
+                return Ok(new ResultForgetPasswordDto {
+                    OtpToken = otpData?.Token,
+                    AccessToken = otpData?.Token,
+                    Message = "An email containing an otp code has been sent to you"
                 });
             }
             catch (Exception e)
             {
-                return BadRequest("An error occured");
+                return BadRequest("An error occured " + e);
             }
         }
     }

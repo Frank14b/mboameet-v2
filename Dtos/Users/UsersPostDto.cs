@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using API.Entities;
+using MongoDB.Bson;
 
 namespace API.DTOs
 {
