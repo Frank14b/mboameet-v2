@@ -69,4 +69,13 @@ namespace API.DTOs
         public int Employees { get; set; }
         public int All { get; set; }
     }
+
+    public class ResultForgetPasswordDto
+    {
+        public string? OtpToken { get; set; }
+
+        public string? AccessToken {get; set;}
+
+        public required string Message { get; set; }
+    }
 }

@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using API.Entities;
+using MongoDB.Bson;
 
 namespace API.DTOs
 {
@@ -137,5 +138,20 @@ namespace API.DTOs
         [Required]
         [EmailAddress]
         public string? Email { get; set; }
+    }
+
+    public class CreateAuthTokenDto
+    {
+        public ObjectId? UserId { get; set; }
+
+        public string? Email { get; set; }
+
+        [EnumDataType(typeof(TokenUsageTypeEnum))]
+        public int UsageType { get; set; }
+    }
+
+    public class ForgetPasswordDto
+    {
+        public required string Email { get; set; }
     }
 }

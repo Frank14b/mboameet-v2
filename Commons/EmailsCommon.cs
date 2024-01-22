@@ -3,14 +3,18 @@ using API.Entities;
 using API.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
+
 namespace API.Commons
 {
     public class EmailsCommon : ControllerBase
     {
         private readonly IMailService _mailService;
-        public EmailsCommon(IMailService mailService)
+        private readonly ILogger _logger;
+
+        public EmailsCommon(IMailService mailService, ILogger logger)
         {
             _mailService = mailService;
+            _logger = logger;
         }
 
         public async Task<bool> SendMail([FromForm] EmailRequestDto request)
@@ -20,8 +24,9 @@ namespace API.Commons
                 await _mailService.SendEmailAsync(request);
                 return true;
             }
-            catch (Exception)
+            catch (Exception e)
             {
+                _logger.LogError("An error occurred: {message}", e.Message);
                 return false;
             }
         }

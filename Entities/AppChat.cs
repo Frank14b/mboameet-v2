@@ -11,7 +11,7 @@ namespace API.Entities
     public class AppChat
     {
         [BsonId]
-        [BsonRepresentation(BsonType.ObjectId)]
+        // [BsonRepresentation(BsonType.ObjectId)]
         public ObjectId Id { get; set; }
 
         [Required]

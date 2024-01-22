@@ -42,6 +42,10 @@
               "target": "Package",
               "version": "[12.0.1, )"
             },
+            "Discord.Net": {
+              "target": "Package",
+              "version": "[3.13.0, )"
+            },
             "MailKit": {
               "target": "Package",
               "version": "[4.3.0, )"
@@ -61,6 +65,18 @@
             "Microsoft.EntityFrameworkCore.Design": {
               "target": "Package",
               "version": "[7.0.14, )"
+            },
+            "Microsoft.Extensions.Caching.Memory": {
+              "target": "Package",
+              "version": "[7.0.0, )"
+            },
+            "Microsoft.Extensions.Caching.StackExchangeRedis": {
+              "target": "Package",
+              "version": "[7.0.15, )"
+            },
+            "Microsoft.Extensions.Logging": {
+              "target": "Package",
+              "version": "[7.0.0, )"
             },
             "MimeKit": {
               "target": "Package",

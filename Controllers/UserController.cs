@@ -27,16 +27,25 @@ namespace API.Controllers
         private readonly IMapper _mapper;
         private readonly IConfiguration _configuration;
         private readonly IUserService _userService;
+        public readonly ILogger _logger;
 
-        public UsersController(DataContext context, ITokenService tokenService, IMapper mapper, IConfiguration configuration, IMailService mailService, IUserService userService)
+        public UsersController(
+            DataContext context,
+            ITokenService tokenService,
+            IMapper mapper,
+            IConfiguration configuration,
+            IMailService mailService,
+            IUserService userService,
+            ILogger<UsersController> logger)
         {
             _context = context;
             _tokenService = tokenService;
             _mapper = mapper;
             _userCommon = new UsersCommon(context);
             _configuration = configuration;
-            _emailsCommon = new EmailsCommon(mailService);
+            _emailsCommon = new EmailsCommon(mailService, logger);
             _userService = userService;
+            _logger = logger;
         }
 
         [AllowAnonymous]
@@ -133,7 +142,6 @@ namespace API.Controllers
                 {
                     return BadRequest("An error occured or user not found");
                 }
-
             }
             catch (Exception e)
             {
@@ -174,7 +182,7 @@ namespace API.Controllers
 
                 // Count before applying pagination for accuracy
                 var totalCount = await query.CountAsync();
-
+                //
                 return Ok(new ResultUsersPaginate
                 {
                     Data = result,
@@ -201,6 +209,47 @@ namespace API.Controllers
             var result = _mapper.Map<ResultAllUserDto>(user);
 
             return Ok(result);
+        }
+
+        [HttpPost("forget-password")]
+        public async Task<ActionResult<ResultForgetPasswordDto>> FogetPassword(ForgetPasswordDto data)
+        {
+            try
+            {
+                AppUser? user = await _userService.GetUserByEmail(data.Email);
+
+                if (user == null) return BadRequest("The provided email is not found");
+
+                var otpData = await _userService.CreateAuthToken(new CreateAuthTokenDto
+                {
+                    Email = user.Email,
+                    UserId = null
+                });
+
+                if (otpData == null) return BadRequest("An error occured please retry later");
+
+                // await _emailsCommon.SendMail(new EmailRequestDto
+                // {
+                //     ToEmail = user?.Email ?? "",
+                //     ToName = user?.FirstName ?? "",
+                //     SubTitle = "Forget Password",
+                //     ReplyToEmail = "",
+                //     Subject = "Forget Password Request",
+                //     Body = _emailsCommon.UserLoginBody(otpData),
+                //     Attachments = { }
+                // });
+
+                return Ok(new ResultForgetPasswordDto
+                {
+                    OtpToken = otpData?.Token,
+                    AccessToken = otpData?.Token,
+                    Message = "An email containing an otp code has been sent to you"
+                });
+            }
+            catch (Exception e)
+            {
+                return BadRequest("An error occured " + e);
+            }
         }
     }
 }

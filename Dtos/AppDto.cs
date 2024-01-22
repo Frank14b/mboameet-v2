@@ -15,4 +15,11 @@ namespace API.DTOs
         enable = 1,
         delete = 2
     }
+
+    public enum TokenUsageTypeEnum
+    {
+        login = 0,
+        forgetPassword = 1,
+        resetPassword = 2,
+    }
 }

@@ -1,3 +1,9 @@
+using System.Net.Mime;
+using Internal;
+using System;
+using System.Text.RegularExpressions;
+using System.Reflection.Metadata;
+using System.Data.Common;
 using API.Commons;
 using API.Data;
 using API.DTOs;
@@ -8,6 +14,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MongoDB.Bson;
+using Microsoft.Extensions.Caching.Memory;
+
 
 namespace API.Controllers
 {
@@ -20,6 +28,7 @@ namespace API.Controllers
         private readonly IMapper _mapper;
         private readonly IMatchService _matchService;
         private readonly IUserService _userService;
+        private readonly IMemoryCache _memoryCache;
 
         public MatchController(
             DataContext context,
@@ -27,12 +36,14 @@ namespace API.Controllers
             IConfiguration configuration,
             IMailService mailService,
             IMatchService matchService,
-            IUserService userService)
+            IUserService userService,
+            IMemoryCache memoryCache)
         {
             _dataContext = context;
             _mapper = mapper;
             _matchService = matchService;
             _userService = userService;
+            _memoryCache = memoryCache;
         }
 
         [HttpPost("")]
@@ -41,6 +52,8 @@ namespace API.Controllers
             try
             {
                 string userId = _userService.GetConnectedUser(User);
+
+                if (data.MatchedUserId == userId) return BadRequest("Invalid user id");
 
                 if ((await _matchService.CheckIfMatchRequestExist(userId, data.MatchedUserId)).Status) return BadRequest("User match request already exists");
                 if ((await _matchService.CheckIfUserSendMatchRequest(userId, data.MatchedUserId, (int)MatchStateEnum.inititated)).Status)
@@ -88,25 +101,46 @@ namespace API.Controllers
             {
                 string userId = _userService.GetConnectedUser(User);
 
+                string cacheKey = "matches_" + userId + "_" + sort + "_" + skip + "_" + limit;
+
+                var cachedMatches = _memoryCache.Get(cacheKey);
+
+                if (cachedMatches != null)
+                {
+                    return Ok(cachedMatches);
+                }
+
                 var query = _dataContext.Matches.Where(m => m.Status == (int)StatusEnum.enable && m.State == (int)MatchStateEnum.approved && (m.UserId.ToString() == userId || m.MatchedUserId.ToString() == userId));
 
+                // Apply sorting directly in the query
                 query = sort == "desc"
                     ? query.OrderByDescending(x => x.CreatedAt)
                     : query.OrderBy(x => x.CreatedAt);
 
+                var totalMatches = await query.CountAsync();
+
                 var matches = await query.Skip(skip).Take(limit).ToListAsync(); //.Include(p => p.Users)
+
+                foreach (var match in matches)
+                {
+                    match.User = await _dataContext.Users.FirstAsync(user => user.Id.Equals(match.UserId));
+                    match.MatchedUser = await _dataContext.Users.FirstAsync(user => user.Id.Equals(match.MatchedUserId));
+                }
 
                 var result = _mapper.Map<IEnumerable<MatchesResultDto>>(matches);
 
-                var totalCount = await query.CountAsync();
-
-                return Ok(new MatchesPaginateResultDto
+                var response = new MatchesPaginateResultDto
                 {
                     Data = result,
                     Limit = limit,
                     Skip = skip,
-                    Total = totalCount
-                });
+                    Total = totalMatches
+                };
+
+                _memoryCache.Set(cacheKey, response, new MemoryCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5) });
+                _memoryCache.Set(cacheKey + "_entities", result, new MemoryCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5) });
+
+                return Ok(response);
             }
             catch (Exception e)
             {

@@ -10,6 +10,7 @@ using MongoDB.Driver;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using API.Middleware;
+using Microsoft.Extensions.Caching.Memory;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -86,6 +87,9 @@ builder.Services.AddScoped<IMailService, MailService>();
 builder.Services.AddScoped<IChatService, ChatService>();
 builder.Services.AddScoped<IMatchService, MatchService>();
 builder.Services.AddScoped<IUserService, UserService>();
+// builder.Services.AddScoped<IMemoryService, MemoryService>();
+
+builder.Services.AddMemoryCache();
 
 builder.Services.AddScoped<UserSeeder>();
 
