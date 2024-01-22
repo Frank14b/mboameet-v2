@@ -55,46 +55,6 @@ namespace API.Commons
             return _status;
         }
 
-        // public TotalUsersDto GetTotalUsers(int userid = 0)
-        // {
-        //     var userbusiness = this._businessCommon.GetUserBusiness(userid);
-        //     var employees = 0;
-        //     var allUsers = 0;
-
-        //     if (userbusiness.Count > 0)
-        //     {
-        //         var resultEmployees = this._context.Users.Where(x => x.Status == (int)StatusEnum.enable && x.Role != (int)RoleEnum.suadmin && x.UserProperties.All(up => userbusiness.Contains(up.Property.BusinessId) && up.IsEmployee)).ToList();
-        //         employees = resultEmployees.Count;
-
-        //         var resultAllUsers = this._context.Users.Where(x => x.Status == (int)StatusEnum.enable && x.Role != (int)RoleEnum.suadmin && x.UserProperties.All(up => userbusiness.Contains(up.Property.BusinessId))).ToList();
-        //         allUsers = resultAllUsers.Count;
-        //     }
-
-        //     var userProperties = this._context.UserProperties.Where(up => up.UserId == userid && up.Status == (int)StatusEnum.enable).ToList();
-        //     ArrayList _propertyList = new ArrayList();
-        //     for (int i = 0; i < userProperties.Count; i++)
-        //     {
-        //         _propertyList.Add(userProperties[i].PropertyId);
-        //     }
-
-        //     if (_propertyList.Count > 0)
-        //     {
-        //         var resultEmployees2 = this._context.Users.Where(x => x.Status == (int)StatusEnum.enable && x.Role != (int)RoleEnum.suadmin && x.UserProperties.All(up => _propertyList.Contains(up.PropertyId) && up.IsEmployee)).ToList();
-        //         employees = employees + resultEmployees2.Count;
-
-        //         var resultAllUsers2 = this._context.Users.Where(x => x.Status == (int)StatusEnum.enable && x.Role != (int)RoleEnum.suadmin && x.UserProperties.All(up => _propertyList.Contains(up.PropertyId))).ToList();
-        //         allUsers = allUsers + resultAllUsers2.Count;
-        //     }
-
-        //     var result = new TotalUsersDto
-        //     {
-        //         employees = employees,
-        //         all = allUsers
-        //     };
-
-        //     return result;
-        // }
-
         public async Task<bool> CheckGoogleAuthToken(string token = "", string urlHost = "")
         {
             try
