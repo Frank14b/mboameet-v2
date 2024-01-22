@@ -90,27 +90,23 @@ namespace API.Controllers
 
                 var query = _dataContext.Matches.Where(m => m.Status == (int)StatusEnum.enable && m.State == (int)MatchStateEnum.approved && (m.UserId.ToString() == userId || m.MatchedUserId.ToString() == userId));
 
-                IQueryable<AppMatch> orderedQuery;
-                if (sort == "desc")
-                {
-                    orderedQuery = query.OrderByDescending(x => x.CreatedAt);
-                }
-                else
-                {
-                    orderedQuery = query.OrderBy(x => x.CreatedAt);
-                }
+                query = sort == "desc"
+                    ? query.OrderByDescending(x => x.CreatedAt)
+                    : query.OrderBy(x => x.CreatedAt);
 
-                var _result = await orderedQuery.Skip(skip).Take(limit).ToListAsync(); //.Include(p => p.Users)
-                var result = _mapper.Map<IEnumerable<MatchesResultDto>>(_result);
-                var matches = new MatchesPaginateResultDto
+                var matches = await query.Skip(skip).Take(limit).ToListAsync(); //.Include(p => p.Users)
+
+                var result = _mapper.Map<IEnumerable<MatchesResultDto>>(matches);
+
+                var totalCount = await query.CountAsync();
+
+                return Ok(new MatchesPaginateResultDto
                 {
                     Data = result,
                     Limit = limit,
                     Skip = skip,
-                    Total = query.Count()
-                };
-
-                return Ok(matches);
+                    Total = totalCount
+                });
             }
             catch (Exception e)
             {

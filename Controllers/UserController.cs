@@ -154,7 +154,6 @@ namespace API.Controllers
                     ? query.OrderByDescending(x => x.CreatedAt)
                     : query.OrderBy(x => x.CreatedAt);
 
-                // Include matches in a single query for better performance
                 var users = await query
                     // .Include(u => u.Match.OrderByDescending(m => m.CreatedAt).Take(10))
                     .Skip(skip)
