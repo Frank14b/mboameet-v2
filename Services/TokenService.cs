@@ -22,7 +22,7 @@ namespace API.Services
             _key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["TokenKey"] ?? ""));
             _adminKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["AdminTokenKey"] ?? ""));
         }
-        public string CreateToken(string Id, int Role)
+        public string CreateToken(string Id, int Role, bool authToken)
         {
             var user_id = Id;
             var role_id = Role;
@@ -31,7 +31,8 @@ namespace API.Services
             {
                 new(JwtRegisteredClaimNames.NameId, user_id),
                 new("RoleId", role_id.ToString()),
-                new("Type", "User")
+                new("Type", "User"),
+                new("Auth", authToken ? "Yes" : "No")
             };
 
             var creds = new SigningCredentials(_key, SecurityAlgorithms.HmacSha512Signature);

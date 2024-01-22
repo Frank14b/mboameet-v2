@@ -18,11 +18,11 @@ namespace API.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-        
-        modelBuilder.Entity<AppUser>()
-            .HasMany(b => b.Match)
-            .WithOne(p => p.MatchedUser)
-            .HasForeignKey(p => p.Id);
+
+            modelBuilder.Entity<AppUser>()
+                .HasMany(b => b.Match)
+                .WithOne(p => p.MatchedUser)
+                .HasForeignKey(p => p.Id);
         }
     }
 }

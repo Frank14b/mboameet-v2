@@ -80,7 +80,7 @@ namespace API.Controllers
 
             var finalresult = _mapper.Map<ResultloginDto>(user);
 
-            finalresult.Token = _tokenService.CreateToken(user.Id.ToString(), user.Role);
+            finalresult.Token = _tokenService.CreateToken(user.Id.ToString(), user.Role, true);
 
             var data_email = new EmailRequestDto
             {
@@ -134,7 +134,7 @@ namespace API.Controllers
                     };
                     await _emailsCommon.SendMail(data_email);
 
-                    finalresult.Token = _tokenService.CreateToken(result?.Id.ToString() ?? "", result?.Role ?? 0);
+                    finalresult.Token = _tokenService.CreateToken(result?.Id.ToString() ?? "", result?.Role ?? 0, true);
 
                     return Ok(finalresult);
                 }
@@ -211,8 +211,88 @@ namespace API.Controllers
             return Ok(result);
         }
 
+        [AllowAnonymous]
         [HttpPost("forget-password")]
         public async Task<ActionResult<ResultForgetPasswordDto>> FogetPassword(ForgetPasswordDto data)
+        {
+            try
+            {
+                AppUser? user = await _userService.GetUserByEmail(data.Email);
+
+                if (user == null) return BadRequest("The provided email is not found");
+
+                // create new otp code token for user verification
+                var otpData = await _userService.CreateAuthToken(new CreateAuthTokenDto
+                {
+                    Email = user.Email,
+                });
+
+                if (otpData == null) return BadRequest("An error occured please retry later");
+
+                //send the otp code token trough email
+                await _emailsCommon.SendMail(new EmailRequestDto
+                {
+                    ToEmail = user?.Email ?? "",
+                    ToName = user?.FirstName ?? "",
+                    SubTitle = "Forget Password",
+                    ReplyToEmail = "",
+                    Subject = "Forget Password Request",
+                    Body = _emailsCommon.UserForgetPasswordBody(new ForgetPasswordEmailDto
+                    {
+                        UserName = user?.UserName ?? "",
+                        Otp = otpData.Otp,
+                        Link = ""
+                    }),
+                    Attachments = { }
+                });
+
+                return Ok(new ResultForgetPasswordDto
+                {
+                    OtpToken = otpData?.Token,
+                    AccessToken = _tokenService.CreateToken(user?.Id.ToString() ?? "", (int)RoleEnum.user, false),
+                    Message = "An email containing an otp code has been sent to you"
+                });
+            }
+            catch (Exception e)
+            {
+                return BadRequest("An error occured " + e);
+            }
+        }
+
+        [HttpPost("verify-token")]
+        public async Task<ActionResult<BooleanReturnDto>> VerifyAuthToken(VerifyAuthTokenDto data)
+        {
+            try
+            {
+                var existingToken = await _context.AuthTokens.FirstOrDefaultAsync(t => t.Token == data.Token && t.Otp == data.Otp && t.UsageType == data.Type && t.Status == (int)StatusEnum.enable);
+                if (existingToken == null) return NotFound("Invalid token or otp code");
+
+                // validate and update the token usage/status for reusability purposes
+                if (existingToken.UsageType == (int)TokenUsageTypeEnum.forgetPassword)
+                {
+                    existingToken.UsageType = (int)TokenUsageTypeEnum.resetPassword;
+                }
+                else
+                {
+                    existingToken.Status = (int)StatusEnum.disable;
+                }
+
+                await _context.SaveChangesAsync(); // save new changes
+
+                return Ok(new BooleanReturnDto
+                {
+                    Status = true,
+                    Message = "Otp code validated successfully",
+                });
+            }
+            catch (Exception e)
+            {
+                return BadRequest("An error occured or invalid token " + e);
+            }
+        }
+
+        [HttpPost("change-password")]
+        public async Task<ActionResult<ResultForgetPasswordDto>> ChangePassword(ForgetPasswordDto data)
         {
             try
             {
@@ -228,16 +308,21 @@ namespace API.Controllers
 
                 if (otpData == null) return BadRequest("An error occured please retry later");
 
-                // await _emailsCommon.SendMail(new EmailRequestDto
-                // {
-                //     ToEmail = user?.Email ?? "",
-                //     ToName = user?.FirstName ?? "",
-                //     SubTitle = "Forget Password",
-                //     ReplyToEmail = "",
-                //     Subject = "Forget Password Request",
-                //     Body = _emailsCommon.UserLoginBody(otpData),
-                //     Attachments = { }
-                // });
+                await _emailsCommon.SendMail(new EmailRequestDto
+                {
+                    ToEmail = user?.Email ?? "",
+                    ToName = user?.FirstName ?? "",
+                    SubTitle = "Forget Password",
+                    ReplyToEmail = "",
+                    Subject = "Forget Password Request",
+                    Body = _emailsCommon.UserForgetPasswordBody(new ForgetPasswordEmailDto
+                    {
+                        UserName = user?.UserName ?? "",
+                        Otp = otpData.Otp,
+                        Link = ""
+                    }),
+                    Attachments = { }
+                });
 
                 return Ok(new ResultForgetPasswordDto
                 {
