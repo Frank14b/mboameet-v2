@@ -4,45 +4,44 @@ using API.Entities;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace API.Seeders
+namespace API.Seeders;
+
+public class UserSeeder
 {
-    public class UserSeeder
+    private readonly DataContext _context;
+    public UserSeeder(DataContext context)
     {
-        private readonly DataContext _context;
-        public UserSeeder(DataContext context)
-        {
-            _context = context;
-        }
+        _context = context;
+    }
 
-        public void SeedData()
+    public void SeedData()
+    {
+        try
         {
-            try
+            if (!_context.Users.Any())
             {
-                if (!_context.Users.Any())
+                using var hmac = new HMACSHA512();
+
+                var user = new AppUser
                 {
-                    using var hmac = new HMACSHA512();
+                    UserName = "frank",
+                    PasswordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes("33@Elrangers")),
+                    PasswordSalt = hmac.Key,
+                    FirstName = "Frank",
+                    LastName = "Fontcha",
+                    Email = "franckfontcha@gmail.com",
+                    Role = (int)RoleEnum.user,
+                    Status = (int)StatusEnum.enable,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow,
+                };
 
-                    var user = new AppUser
-                    {
-                        UserName = "frank",
-                        PasswordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes("33@Elrangers")),
-                        PasswordSalt = hmac.Key,
-                        FirstName = "Frank",
-                        LastName = "Fontcha",
-                        Email = "franckfontcha@gmail.com",
-                        Role = (int)RoleEnum.user,
-                        Status = (int)StatusEnum.enable,
-                        CreatedAt = DateTime.UtcNow,
-                        UpdatedAt = DateTime.UtcNow,
-                    };
+                _context.Users.Add(user);
 
-                    _context.Users.Add(user);
-
-                    _context.SaveChanges();
-                }
+                _context.SaveChanges();
             }
-            catch (Exception)
-            { }
         }
+        catch (Exception)
+        { }
     }
 }

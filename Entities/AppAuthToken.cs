@@ -5,7 +5,8 @@ using API.DTOs;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 
-namespace API.Entities {
+namespace API.Entities
+{
 
     [Table("AuthTokens")]
     public class AppAuthToken
@@ -15,11 +16,11 @@ namespace API.Entities {
 
         public ObjectId? UserId { get; set; }
 
-        public string? Email {get; set;}
+        public required string Email { get; set; }
 
-        public required int Otp {get; set;}
+        public required int Otp { get; set; }
 
-        public required string Token {get; set;}
+        public required string Token { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
@@ -29,6 +30,6 @@ namespace API.Entities {
         public int Status { get; set; } = (int)StatusEnum.enable;
 
         [EnumDataType(typeof(TokenUsageTypeEnum))]
-        public int UsageType {get; set;} = (int)TokenUsageTypeEnum.login;
+        public int UsageType { get; set; } = (int)TokenUsageTypeEnum.login;
     }
 }

@@ -7,31 +7,29 @@ using MongoDB.Bson.Serialization.Attributes;
 
 namespace API.Entities;
 
-[Table("Chats")]
-public class AppChat
+[Table("Groups")]
+public class AppGroup
 {
     [BsonId]
-    // [BsonRepresentation(BsonType.ObjectId)]
     public ObjectId Id { get; set; }
 
     [Required]
-    public required string Message { get; set; }
+    public required string Name { get; set; }
 
-    [EnumDataType(typeof(EnumMessageType))]
-    public required int MessageType { get; set; }
+    public required string Type { get; set; }
+
+    public string? Description { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public DateTime UpdatedAt { get; set; }
 
     [EnumDataType(typeof(StatusEnum))]
-    public int Status { get; set; }
+    public int Status { get; set; } = (int)StatusEnum.enable;
 
     [BsonId]
-    public ObjectId Sender { get; set; }
-
-    [BsonId]
-    public ObjectId Receiver { get; set; }
+    [Required]
+    public required ObjectId UserId { get; set; }
 
     public List<string>? Files { get; set; }
 }

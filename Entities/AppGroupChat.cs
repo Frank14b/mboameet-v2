@@ -1,4 +1,3 @@
-using System.Collections;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using API.DTOs;
@@ -7,11 +6,10 @@ using MongoDB.Bson.Serialization.Attributes;
 
 namespace API.Entities;
 
-[Table("Chats")]
-public class AppChat
+[Table("GroupChats")]
+public class AppGroupChat
 {
     [BsonId]
-    // [BsonRepresentation(BsonType.ObjectId)]
     public ObjectId Id { get; set; }
 
     [Required]
@@ -31,7 +29,7 @@ public class AppChat
     public ObjectId Sender { get; set; }
 
     [BsonId]
-    public ObjectId Receiver { get; set; }
+    public ObjectId GroupId { get; set; }
 
     public List<string>? Files { get; set; }
 }

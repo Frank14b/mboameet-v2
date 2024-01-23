@@ -7,6 +7,7 @@ using API.Entities;
 using API.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
+using System.Text;
 
 namespace API.Services
 {
@@ -81,7 +82,7 @@ namespace API.Services
                 {
                     Otp = int.Parse(otp),
                     Token = token,
-                    Email = data?.Email,
+                    Email = data?.Email ?? "",
                     UserId = data?.UserId,
                     UsageType = data?.UsageType ?? 0
                 };
@@ -114,6 +115,21 @@ namespace API.Services
         public async Task<AppUser?> GetUserByEmail(string email)
         {
             return await _dataContext.Users.FirstOrDefaultAsync((x) => x.Email != null && x.Email.ToLower() == email.ToLower());
+        }
+
+        public PassWordGeneratedDto GeneratePassword(string password)
+        {
+            // encrypt password and return the hashed value and the salt
+            using var hmac = new HMACSHA512();
+
+            byte[] PasswordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(password));
+            byte[] PasswordSalt = hmac.Key;
+
+            return new()
+            {
+                PasswordHash = PasswordHash,
+                PasswordSalt = PasswordSalt
+            };
         }
     }
 }

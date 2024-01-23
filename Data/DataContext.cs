@@ -16,6 +16,14 @@ namespace API.Data
 
         public DbSet<AppAuthToken> AuthTokens { get; set; }
 
+        public DbSet<AppGroup> Groups { get; set; }
+
+        public DbSet<AppGroupChat> GroupChats { get; set; }
+
+        public DbSet<AppGroupUser> GroupUsers { get; set; }
+
+        public DbSet<AppGroupeAcces> GroupeAcces { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
 

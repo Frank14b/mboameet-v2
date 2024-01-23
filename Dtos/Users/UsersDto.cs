@@ -176,7 +176,7 @@ namespace API.DTOs
         [Required]
         [MinLength(8)]
         [RegularExpression("^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$")]
-        public required int Password { get; set; }
+        public required string Password { get; set; }
     }
 
     public class ResultloginDto
@@ -258,5 +258,12 @@ namespace API.DTOs
         public required string UserName { get; set; }
         public string? Link { get; set; }
         public int? Otp { get; set; }
+    }
+
+    public class PassWordGeneratedDto
+    {
+        public required byte[] PasswordHash { get; set; }
+
+        public required byte[] PasswordSalt { get; set; }
     }
 }

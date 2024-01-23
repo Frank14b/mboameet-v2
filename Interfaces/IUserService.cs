@@ -15,5 +15,7 @@ namespace API.Interfaces
         Task<AppAuthToken?> CreateAuthToken(CreateAuthTokenDto data);
 
         Task<AppUser?> GetUserByEmail(string email);
+
+        PassWordGeneratedDto GeneratePassword(string password);
     }
 }

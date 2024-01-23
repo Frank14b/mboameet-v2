@@ -1,4 +1,3 @@
-using System.Collections;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using API.DTOs;
@@ -7,18 +6,11 @@ using MongoDB.Bson.Serialization.Attributes;
 
 namespace API.Entities;
 
-[Table("Chats")]
-public class AppChat
+[Table("GroupUsers")]
+public class AppGroupUser
 {
     [BsonId]
-    // [BsonRepresentation(BsonType.ObjectId)]
     public ObjectId Id { get; set; }
-
-    [Required]
-    public required string Message { get; set; }
-
-    [EnumDataType(typeof(EnumMessageType))]
-    public required int MessageType { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
@@ -28,10 +20,11 @@ public class AppChat
     public int Status { get; set; }
 
     [BsonId]
-    public ObjectId Sender { get; set; }
+    public ObjectId UserId { get; set; }
 
     [BsonId]
-    public ObjectId Receiver { get; set; }
+    public ObjectId GroupId { get; set; }
 
-    public List<string>? Files { get; set; }
+    [BsonId]
+    public ObjectId GroupAccesId { get; set; }
 }

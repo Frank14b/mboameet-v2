@@ -11,7 +11,6 @@ namespace API.Controllers
     {
         public BaseApiController()
         {
-
             // this._context = context;
         }
     }

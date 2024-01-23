@@ -14,327 +14,326 @@ using API.Commons;
 using API.Entities;
 using AutoMapper;
 
-namespace API.Controllers
+namespace API.Controllers;
+
+[Authorize(Policy = "IsUser")]
+[Route("/api/v1/users")]
+public class UsersController : BaseApiController
 {
-    [Authorize(Policy = "IsUser")]
-    [Route("/api/v1/users")]
-    public class UsersController : BaseApiController
+    private readonly DataContext _context;
+    private readonly ITokenService _tokenService;
+    private readonly UsersCommon _userCommon;
+    private readonly EmailsCommon _emailsCommon;
+    private readonly IMapper _mapper;
+    private readonly IConfiguration _configuration;
+    private readonly IUserService _userService;
+    public readonly ILogger _logger;
+
+    public UsersController(
+        DataContext context,
+        ITokenService tokenService,
+        IMapper mapper,
+        IConfiguration configuration,
+        IMailService mailService,
+        IUserService userService,
+        ILogger<UsersController> logger)
     {
-        private readonly DataContext _context;
-        private readonly ITokenService _tokenService;
-        private readonly UsersCommon _userCommon;
-        private readonly EmailsCommon _emailsCommon;
-        private readonly IMapper _mapper;
-        private readonly IConfiguration _configuration;
-        private readonly IUserService _userService;
-        public readonly ILogger _logger;
+        _context = context;
+        _tokenService = tokenService;
+        _mapper = mapper;
+        _userCommon = new UsersCommon(context);
+        _configuration = configuration;
+        _emailsCommon = new EmailsCommon(mailService, logger);
+        _userService = userService;
+        _logger = logger;
+    }
 
-        public UsersController(
-            DataContext context,
-            ITokenService tokenService,
-            IMapper mapper,
-            IConfiguration configuration,
-            IMailService mailService,
-            IUserService userService,
-            ILogger<UsersController> logger)
+    [AllowAnonymous]
+    [HttpPost("")]
+    public async Task<ActionResult<ResultloginDto>> RegisterUsers(RegisterDto data)
+    {
+        if (await _userCommon.UserNameExist(data.Username)) return BadRequest("Username already in used");
+
+        if (await _userCommon.UserEmailExist(data?.Email ?? "")) return BadRequest("Email Address already in used");
+
+        if (!_userCommon.IsValidPassword(data?.Password ?? "")) return BadRequest("Password should have at least 1 lowercase letter, 1 uppercase letter, 1 digit, 1 special character, and at least 8 characters long");
+
+        PassWordGeneratedDto password = _userService.GeneratePassword(data?.Password ?? "");
+
+        var user = new AppUser
         {
-            _context = context;
-            _tokenService = tokenService;
-            _mapper = mapper;
-            _userCommon = new UsersCommon(context);
-            _configuration = configuration;
-            _emailsCommon = new EmailsCommon(mailService, logger);
-            _userService = userService;
-            _logger = logger;
-        }
+            UserName = data?.Username ?? "",
+            PasswordHash = password.PasswordHash,
+            PasswordSalt = password.PasswordSalt,
+            FirstName = data?.Firstname,
+            LastName = data?.Lastname,
+            Email = data?.Email,
+            Age = 18,
+            Role = (int)RoleEnum.user,
+            Status = (int)StatusEnum.enable,
+            UpdatedAt = DateTime.UtcNow,
+        };
 
-        [AllowAnonymous]
-        [HttpPost("")]
-        public async Task<ActionResult<ResultloginDto>> RegisterUsers(RegisterDto data)
+        _context.Users.Add(user);
+
+        await _context.SaveChangesAsync();
+
+        var finalresult = _mapper.Map<ResultloginDto>(user);
+
+        finalresult.Token = _tokenService.CreateToken(user.Id.ToString(), user.Role, true);
+
+        var data_email = new EmailRequestDto
         {
-            if (await _userCommon.UserNameExist(data.Username)) return BadRequest("Username already in used");
+            ToEmail = user?.Email ?? "",
+            ToName = user?.FirstName ?? "",
+            SubTitle = "User Registration",
+            ReplyToEmail = "",
+            Subject = "User Registration",
+            Body = _emailsCommon.UserRegisterBody(user),
+            Attachments = { }
+        };
+        await _emailsCommon.SendMail(data_email);
 
-            if (await _userCommon.UserEmailExist(data?.Email ?? "")) return BadRequest("Email Address already in used");
+        return Ok(finalresult);
+    }
 
-            if (!_userCommon.IsValidPassword(data?.Password ?? "")) return BadRequest("Password should have at least 1 lowercase letter, 1 uppercase letter, 1 digit, 1 special character, and at least 8 characters long");
+    [AllowAnonymous]
+    [HttpPost("auth")]
+    public async Task<ActionResult<ResultloginDto>> LoginUsers(LoginDto data)
+    {
+        try
+        {
+            var result = await _context.Users.SingleOrDefaultAsync(x => ((x.UserName == data.Login) || (x.Email == data.Login)) && x.Role != (int)RoleEnum.suadmin && x.Status != (int)StatusEnum.delete);
 
-            using var hmac = new HMACSHA512();
+            if (result == null) Unauthorized("Invalid Login / Password, User not found");
 
-            var user = new AppUser
+            if (result?.PasswordSalt != null)
             {
-                UserName = data?.Username ?? "",
-                PasswordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(data?.Password ?? "")),
-                PasswordSalt = hmac.Key,
-                FirstName = data?.Firstname,
-                LastName = data?.Lastname,
-                Email = data?.Email,
-                Age = 18,
-                Role = (int)RoleEnum.user,
-                Status = (int)StatusEnum.enable,
-                UpdatedAt = DateTime.UtcNow,
-            };
+                using var hmac = new HMACSHA512(result.PasswordSalt);
+                var computedHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(data.Password));
 
-            _context.Users.Add(user);
+                for (int i = 0; i < computedHash.Length; i++)
+                {
+                    if (computedHash[i] != result.PasswordHash[i]) return Unauthorized("Invalid Login / Password, User not found");
+                }
 
-            await _context.SaveChangesAsync();
+                var finalresult = _mapper.Map<ResultloginDto>(result);
 
-            var finalresult = _mapper.Map<ResultloginDto>(user);
+                if (result.Status == (int)StatusEnum.disable) return Ok("Your account is disabled. Please Contact the admin");
 
-            finalresult.Token = _tokenService.CreateToken(user.Id.ToString(), user.Role, true);
+                var data_email = new EmailRequestDto
+                {
+                    ToEmail = result?.Email ?? "",
+                    ToName = result?.FirstName ?? "",
+                    SubTitle = "Login Attempts",
+                    ReplyToEmail = "",
+                    Subject = "Login Attempts",
+                    Body = _emailsCommon.UserLoginBody(finalresult),
+                    Attachments = { }
+                };
+                await _emailsCommon.SendMail(data_email);
 
-            var data_email = new EmailRequestDto
+                finalresult.Token = _tokenService.CreateToken(result?.Id.ToString() ?? "", result?.Role ?? 0, true);
+
+                return Ok(finalresult);
+            }
+            else
+            {
+                return BadRequest("An error occured or user not found");
+            }
+        }
+        catch (Exception e)
+        {
+            return BadRequest("An error occured or user not found " + e);
+        }
+    }
+
+    [HttpGet("")]
+    public async Task<ActionResult<IEnumerable<ResultPaginate>>> GetUsers(int skip = 0, int limit = 50, string sort = "desc")
+    {
+        try
+        {
+            var query = _context.Users
+                .Where(x => x.Role != (int)RoleEnum.suadmin && x.Status != (int)StatusEnum.delete);
+
+            // Apply sorting directly in the query
+            query = sort == "desc"
+                ? query.OrderByDescending(x => x.CreatedAt)
+                : query.OrderBy(x => x.CreatedAt);
+
+            var users = await query
+                // .Include(u => u.Match.OrderByDescending(m => m.CreatedAt).Take(10))
+                .Skip(skip)
+                .Take(limit)
+                .ToListAsync();
+
+            foreach (var user in users)
+            {
+                user.Match = await _context.Matches
+                    .Where(m => m.UserId == user.Id)
+                    .OrderByDescending(m => m.CreatedAt)
+                    .Take(5)
+                    .ToListAsync();
+            }
+
+            // Map to DTO after fetching with included matches
+            var result = _mapper.Map<IEnumerable<ResultAllUserDto>>(users);
+
+            // Count before applying pagination for accuracy
+            var totalCount = await query.CountAsync();
+            //
+            return Ok(new ResultPaginate
+            {
+                Data = result,
+                Limit = limit,
+                Skip = skip,
+                Total = totalCount
+            });
+        }
+        catch (Exception e)
+        {
+            return BadRequest("An error occurred or user not found " + e); // Log exception details separately
+        }
+    }
+
+    [HttpPost("validate-token")]
+    public async Task<ActionResult<ResultAllUserDto>> ValidateToken()
+    {
+        string id = _userService.GetConnectedUser(User);
+
+        if (!await _userCommon.UserIdExist(id)) return BadRequest("User not found");
+
+        var user = await _context.Users.Where(x => x.Id.ToString() == id).FirstAsync();
+
+        var result = _mapper.Map<ResultAllUserDto>(user);
+
+        return Ok(result);
+    }
+
+    [AllowAnonymous]
+    [HttpPost("forget-password")]
+    public async Task<ActionResult<ResultForgetPasswordDto>> FogetPassword(ForgetPasswordDto data)
+    {
+        try
+        {
+            AppUser? user = await _userService.GetUserByEmail(data.Email);
+
+            if (user == null) return BadRequest("The provided email is not found");
+
+            // create new otp code token for user verification
+            var otpData = await _userService.CreateAuthToken(new CreateAuthTokenDto
+            {
+                Email = user.Email,
+            });
+
+            if (otpData == null) return BadRequest("An error occured please retry later");
+
+            //send the otp code token trough email
+            await _emailsCommon.SendMail(new EmailRequestDto
             {
                 ToEmail = user?.Email ?? "",
                 ToName = user?.FirstName ?? "",
-                SubTitle = "User Registration",
+                SubTitle = "Forget Password",
                 ReplyToEmail = "",
-                Subject = "User Registration",
-                Body = _emailsCommon.UserRegisterBody(user),
+                Subject = "Forget Password Request",
+                Body = _emailsCommon.UserForgetPasswordBody(new ForgetPasswordEmailDto
+                {
+                    UserName = user?.UserName ?? "",
+                    Otp = otpData.Otp,
+                    Link = ""
+                }),
                 Attachments = { }
-            };
-            await _emailsCommon.SendMail(data_email);
+            });
 
-            return Ok(finalresult);
+            return Ok(new ResultForgetPasswordDto
+            {
+                OtpToken = otpData?.Token,
+                AccessToken = _tokenService.CreateToken(user?.Id.ToString() ?? "", (int)RoleEnum.user, false),
+                Message = "An email containing an otp code has been sent to you"
+            });
         }
-
-        [AllowAnonymous]
-        [HttpPost("auth")]
-        public async Task<ActionResult<ResultloginDto>> LoginUsers(LoginDto data)
+        catch (Exception e)
         {
-            try
-            {
-                var result = await _context.Users.SingleOrDefaultAsync(x => ((x.UserName == data.Login) || (x.Email == data.Login)) && x.Role != (int)RoleEnum.suadmin && x.Status != (int)StatusEnum.delete);
-
-                if (result == null) Unauthorized("Invalid Login / Password, User not found");
-
-                if (result?.PasswordSalt != null)
-                {
-                    using var hmac = new HMACSHA512(result.PasswordSalt);
-
-                    var computedHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(data.Password));
-
-                    for (int i = 0; i < computedHash.Length; i++)
-                    {
-                        if (computedHash[i] != result.PasswordHash[i]) return Unauthorized("Invalid Login / Password, User not found");
-                    }
-
-                    var finalresult = _mapper.Map<ResultloginDto>(result);
-
-                    if (result.Status == (int)StatusEnum.disable) return Ok("Your account is disabled. Please Contact the admin");
-
-                    var data_email = new EmailRequestDto
-                    {
-                        ToEmail = result?.Email ?? "",
-                        ToName = result?.FirstName ?? "",
-                        SubTitle = "Login Attempts",
-                        ReplyToEmail = "",
-                        Subject = "Login Attempts",
-                        Body = _emailsCommon.UserLoginBody(finalresult),
-                        Attachments = { }
-                    };
-                    await _emailsCommon.SendMail(data_email);
-
-                    finalresult.Token = _tokenService.CreateToken(result?.Id.ToString() ?? "", result?.Role ?? 0, true);
-
-                    return Ok(finalresult);
-                }
-                else
-                {
-                    return BadRequest("An error occured or user not found");
-                }
-            }
-            catch (Exception e)
-            {
-                return BadRequest("An error occured or user not found " + e);
-            }
+            return BadRequest("An error occured " + e);
         }
+    }
 
-        [HttpGet("")]
-        public async Task<ActionResult<IEnumerable<ResultUsersPaginate>>> GetUsers(int skip = 0, int limit = 50, string sort = "desc")
+    [HttpPost("verify-token")]
+    public async Task<ActionResult<BooleanReturnDto>> VerifyAuthToken(VerifyAuthTokenDto data)
+    {
+        try
         {
-            try
+            var existingToken = await _context.AuthTokens.FirstOrDefaultAsync(t => t.Token == data.Token && t.Otp == data.Otp && t.UsageType == data.Type && t.Status == (int)StatusEnum.enable);
+            if (existingToken == null) return NotFound("Invalid token or otp code");
+
+            // validate and update the token usage/status for reusability purposes
+            if (existingToken.UsageType == (int)TokenUsageTypeEnum.forgetPassword)
             {
-                var query = _context.Users
-                    .Where(x => x.Role != (int)RoleEnum.suadmin && x.Status != (int)StatusEnum.delete);
+                string token = Guid.NewGuid().ToString(); //generate a new token and replace the current
 
-                // Apply sorting directly in the query
-                query = sort == "desc"
-                    ? query.OrderByDescending(x => x.CreatedAt)
-                    : query.OrderBy(x => x.CreatedAt);
-
-                var users = await query
-                    // .Include(u => u.Match.OrderByDescending(m => m.CreatedAt).Take(10))
-                    .Skip(skip)
-                    .Take(limit)
-                    .ToListAsync();
-
-                foreach (var user in users)
-                {
-                    user.Match = await _context.Matches
-                        .Where(m => m.UserId == user.Id)
-                        .OrderByDescending(m => m.CreatedAt)
-                        .Take(5)
-                        .ToListAsync();
-                }
-
-                // Map to DTO after fetching with included matches
-                var result = _mapper.Map<IEnumerable<ResultAllUserDto>>(users);
-
-                // Count before applying pagination for accuracy
-                var totalCount = await query.CountAsync();
-                //
-                return Ok(new ResultUsersPaginate
-                {
-                    Data = result,
-                    Limit = limit,
-                    Skip = skip,
-                    Total = totalCount
-                });
+                existingToken.UsageType = (int)TokenUsageTypeEnum.resetPassword;
+                existingToken.Token = token;
             }
-            catch (Exception e)
+            else
             {
-                return BadRequest("An error occurred or user not found " + e); // Log exception details separately
+                existingToken.Status = (int)StatusEnum.disable;
             }
+
+            await _context.SaveChangesAsync(); // save new changes
+
+            return Ok(new BooleanReturnDto
+            {
+                Status = true,
+                Message = "Otp code validated successfully",
+            });
         }
-
-        [HttpPost("validate-token")]
-        public async Task<ActionResult<ResultAllUserDto>> ValidateToken()
+        catch (Exception e)
         {
-            string id = _userService.GetConnectedUser(User);
-
-            if (!await _userCommon.UserIdExist(id)) return BadRequest("User not found");
-
-            var user = await _context.Users.Where(x => x.Id.ToString() == id).FirstAsync();
-
-            var result = _mapper.Map<ResultAllUserDto>(user);
-
-            return Ok(result);
+            return BadRequest("An error occured or invalid token " + e);
         }
+    }
 
-        [AllowAnonymous]
-        [HttpPost("forget-password")]
-        public async Task<ActionResult<ResultForgetPasswordDto>> FogetPassword(ForgetPasswordDto data)
+    [HttpPost("change-password")]
+    public async Task<ActionResult<BooleanReturnDto>> ChangePassword(ChangePasswordDto data)
+    {
+        try
         {
-            try
+            var existingToken = await _context.AuthTokens.FirstOrDefaultAsync(t => t.Token == data.Token && t.UsageType == (int)TokenUsageTypeEnum.resetPassword && t.Status == (int)StatusEnum.enable);
+            if (existingToken == null) return NotFound("Invalid token");
+
+            existingToken.Status = (int)StatusEnum.disable;
+            await _context.SaveChangesAsync();
+
+            AppUser? user = await _userService.GetUserByEmail(existingToken.Email);
+
+            if (user == null) return BadRequest("An error occured or invalid token"); // check if user exist or not
+
+            PassWordGeneratedDto password = _userService.GeneratePassword(data.Password);
+
+            user.PasswordHash = password.PasswordHash;
+            user.PasswordSalt = password.PasswordSalt;
+            await _context.SaveChangesAsync();
+
+            await _emailsCommon.SendMail(new EmailRequestDto
             {
-                AppUser? user = await _userService.GetUserByEmail(data.Email);
+                ToEmail = user?.Email ?? "",
+                ToName = user?.FirstName ?? "",
+                SubTitle = "Password Change",
+                ReplyToEmail = "",
+                Subject = "Password Change Confirmation",
+                Body = _emailsCommon.ChangePasswordBody(user),
+                Attachments = { }
+            });
 
-                if (user == null) return BadRequest("The provided email is not found");
-
-                // create new otp code token for user verification
-                var otpData = await _userService.CreateAuthToken(new CreateAuthTokenDto
-                {
-                    Email = user.Email,
-                });
-
-                if (otpData == null) return BadRequest("An error occured please retry later");
-
-                //send the otp code token trough email
-                await _emailsCommon.SendMail(new EmailRequestDto
-                {
-                    ToEmail = user?.Email ?? "",
-                    ToName = user?.FirstName ?? "",
-                    SubTitle = "Forget Password",
-                    ReplyToEmail = "",
-                    Subject = "Forget Password Request",
-                    Body = _emailsCommon.UserForgetPasswordBody(new ForgetPasswordEmailDto
-                    {
-                        UserName = user?.UserName ?? "",
-                        Otp = otpData.Otp,
-                        Link = ""
-                    }),
-                    Attachments = { }
-                });
-
-                return Ok(new ResultForgetPasswordDto
-                {
-                    OtpToken = otpData?.Token,
-                    AccessToken = _tokenService.CreateToken(user?.Id.ToString() ?? "", (int)RoleEnum.user, false),
-                    Message = "An email containing an otp code has been sent to you"
-                });
-            }
-            catch (Exception e)
+            return Ok(new BooleanReturnDto
             {
-                return BadRequest("An error occured " + e);
-            }
+                Status = true,
+                Message = "Password has been changed successfully",
+            });
         }
-
-        [HttpPost("verify-token")]
-        public async Task<ActionResult<BooleanReturnDto>> VerifyAuthToken(VerifyAuthTokenDto data)
+        catch (Exception e)
         {
-            try
-            {
-                var existingToken = await _context.AuthTokens.FirstOrDefaultAsync(t => t.Token == data.Token && t.Otp == data.Otp && t.UsageType == data.Type && t.Status == (int)StatusEnum.enable);
-                if (existingToken == null) return NotFound("Invalid token or otp code");
-
-                // validate and update the token usage/status for reusability purposes
-                if (existingToken.UsageType == (int)TokenUsageTypeEnum.forgetPassword)
-                {
-                    existingToken.UsageType = (int)TokenUsageTypeEnum.resetPassword;
-                }
-                else
-                {
-                    existingToken.Status = (int)StatusEnum.disable;
-                }
-
-                await _context.SaveChangesAsync(); // save new changes
-
-                return Ok(new BooleanReturnDto
-                {
-                    Status = true,
-                    Message = "Otp code validated successfully",
-                });
-            }
-            catch (Exception e)
-            {
-                return BadRequest("An error occured or invalid token " + e);
-            }
-        }
-
-        [HttpPost("change-password")]
-        public async Task<ActionResult<ResultForgetPasswordDto>> ChangePassword(ForgetPasswordDto data)
-        {
-            try
-            {
-                AppUser? user = await _userService.GetUserByEmail(data.Email);
-
-                if (user == null) return BadRequest("The provided email is not found");
-
-                var otpData = await _userService.CreateAuthToken(new CreateAuthTokenDto
-                {
-                    Email = user.Email,
-                    UserId = null
-                });
-
-                if (otpData == null) return BadRequest("An error occured please retry later");
-
-                await _emailsCommon.SendMail(new EmailRequestDto
-                {
-                    ToEmail = user?.Email ?? "",
-                    ToName = user?.FirstName ?? "",
-                    SubTitle = "Forget Password",
-                    ReplyToEmail = "",
-                    Subject = "Forget Password Request",
-                    Body = _emailsCommon.UserForgetPasswordBody(new ForgetPasswordEmailDto
-                    {
-                        UserName = user?.UserName ?? "",
-                        Otp = otpData.Otp,
-                        Link = ""
-                    }),
-                    Attachments = { }
-                });
-
-                return Ok(new ResultForgetPasswordDto
-                {
-                    OtpToken = otpData?.Token,
-                    AccessToken = otpData?.Token,
-                    Message = "An email containing an otp code has been sent to you"
-                });
-            }
-            catch (Exception e)
-            {
-                return BadRequest("An error occured " + e);
-            }
+            return BadRequest("An error occured " + e);
         }
     }
 }
