@@ -24,3 +24,10 @@ public class JoinGroupDto
 {
     public required string GroupAccesId { get; set; }
 }
+
+public class UpdateGroupDto
+{
+    public string? Name { get; set; }
+    public string? Type { get; set; }
+    public string? Description { get; set; }
+}

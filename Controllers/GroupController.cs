@@ -139,7 +139,7 @@ public class GroupController : BaseApiController
     }
 
     [HttpDelete("{id}")]
-    public async Task<ActionResult<BooleanReturnDto>> DeleteGroup(string id)
+    public async Task<ActionResult<BooleanReturnDto>> Delete(string id)
     {
         try
         {
@@ -160,6 +160,35 @@ public class GroupController : BaseApiController
         catch (Exception ex)
         {
             _logger.LogError("Error while deleting the group", ex?.Message);
+            return BadRequest("An error occured or group not found");
+        }
+    }
+
+    [HttpPut("{id}")]
+    public async Task<ActionResult<BooleanReturnDto>> Update(string id, UpdateGroupDto data)
+    {
+        try
+        {
+            string userId = _userService.GetConnectedUser(User);
+            //check if the group exist and not belonging to the user
+            AppGroup? group = await _dataContext.Groups.FirstOrDefaultAsync(g => g.Id.ToString() == id && g.UserId.ToString() == userId);
+            if (group == null) return NotFound("Invalid Group Id / group not found");
+
+            group.Name = data?.Name ?? group.Name;
+            group.Description = data?.Name ?? group.Description;
+            group.Type = data?.Name ?? group.Type;
+
+            await _dataContext.SaveChangesAsync();
+
+            return Ok(new BooleanReturnDto()
+            {
+                Status = true,
+                Message = "Successfully updated the group"
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError("Error while updating the group", ex?.Message);
             return BadRequest("An error occured or group not found");
         }
     }
