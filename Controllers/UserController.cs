@@ -149,7 +149,7 @@ public class UsersController : BaseApiController
     }
 
     [HttpGet("")]
-    public async Task<ActionResult<IEnumerable<ResultPaginate>>> GetUsers(int skip = 0, int limit = 50, string sort = "desc")
+    public async Task<ActionResult<IEnumerable<ResultPaginate<ResultAllUserDto>>>> GetUsers(int skip = 0, int limit = 50, string sort = "desc")
     {
         try
         {
@@ -182,7 +182,7 @@ public class UsersController : BaseApiController
             // Count before applying pagination for accuracy
             var totalCount = await query.CountAsync();
             //
-            return Ok(new ResultPaginate
+            return Ok(new ResultPaginate<ResultAllUserDto>
             {
                 Data = result,
                 Limit = limit,

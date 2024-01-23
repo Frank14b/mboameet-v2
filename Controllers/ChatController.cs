@@ -56,7 +56,7 @@ namespace API.Controllers
         }
 
         [HttpGet("{userId}")]
-        public async Task<ActionResult<ResultPaginate>> GetMessages(string userId, int skip = 0, int limit = 50, string sort = "desc")
+        public async Task<ActionResult<ResultPaginate<MessageResultDto>>> GetMessages(string userId, int skip = 0, int limit = 50, string sort = "desc")
         {
             try
             {
@@ -72,7 +72,7 @@ namespace API.Controllers
 
                 var result = _mapper.Map<IEnumerable<MessageResultDto>>(_result);
 
-                return Ok(new ResultPaginate
+                return Ok(new ResultPaginate<MessageResultDto>
                 {
                     Data = result,
                     Limit = limit,
