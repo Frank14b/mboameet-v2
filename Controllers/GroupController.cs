@@ -65,7 +65,7 @@ public class GroupController : BaseApiController
     }
 
     [HttpGet("")]
-    public async Task<ActionResult<ResultPaginate>> GetGroups(int skip = 0, int limit = 30, string sort = "desc", string keyword = "")
+    public async Task<ActionResult<ResultPaginate<GroupListDto>>> GetGroups(int skip = 0, int limit = 30, string sort = "desc", string keyword = "")
     {
         try
         {
@@ -86,7 +86,7 @@ public class GroupController : BaseApiController
 
             var result = _mapper.Map<IEnumerable<GroupListDto>>(_result);
 
-            return Ok(new ResultPaginate
+            return Ok(new ResultPaginate<GroupListDto>
             {
                 Data = result,
                 Limit = limit,

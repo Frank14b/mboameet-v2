@@ -95,7 +95,7 @@ namespace API.Controllers
         }
 
         [HttpGet("")]
-        public async Task<ActionResult<IEnumerable<ResultPaginate>>> GetUserMatches(int skip = 0, int limit = 50, string sort = "desc")
+        public async Task<ActionResult<IEnumerable<ResultPaginate<MatchesResultDto>>>> GetUserMatches(int skip = 0, int limit = 50, string sort = "desc")
         {
             try
             {
@@ -129,7 +129,7 @@ namespace API.Controllers
 
                 var result = _mapper.Map<IEnumerable<MatchesResultDto>>(matches);
 
-                var response = new ResultPaginate
+                var response = new ResultPaginate<MatchesResultDto>
                 {
                     Data = result,
                     Limit = limit,
