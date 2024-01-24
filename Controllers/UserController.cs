@@ -1,13 +1,7 @@
-using System;
-using System.Security.Claims;
-using System.Security.Cryptography;
-using System.Text;
-using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using API.Interfaces;
-using API.Services;
 using API.Data;
 using API.DTOs;
 using API.Commons;
@@ -375,6 +369,40 @@ public class UsersController : BaseApiController
         catch (Exception e)
         {
             _logger.LogError("An error occured during profile update", e.Message);
+            return BadRequest("An error occured ");
+        }
+    }
+
+    [HttpDelete("")]
+    public async Task<ActionResult<BooleanReturnDto>> DeleteAccount(DeleteProfile data)
+    {
+        try
+        {
+            string userId = _userService.GetConnectedUser(User);
+
+            AppUser? user = await _context.Users.FirstOrDefaultAsync(u => u.Id.ToString() == userId);
+
+            if (user == null) return BadRequest("An error occured");
+
+            if (!_userService.UserPasswordIsValid(user.PasswordSalt, user.PasswordHash, data.Password)) return Unauthorized("Invalid Password");
+
+            user.Status = (int)StatusEnum.delete;
+            user.Email = AppConstants.Deletedkeyword + user.Email;
+            user.UserName = AppConstants.Deletedkeyword + user.UserName;
+            user.FirstName = "";
+            user.LastName = "";
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new BooleanReturnDto
+            {
+                Status = true,
+                Message = "User account has been deleted"
+            });
+        }
+        catch (Exception e)
+        {
+            _logger.LogError("An error occured while deleting account", e.Message);
             return BadRequest("An error occured ");
         }
     }
