@@ -9,7 +9,7 @@ namespace API.Helpers
         public AutoMapperProfiles()
         {
             CreateMap<AppUser, ResultUpdateUserDto>();
-            CreateMap<AppUser, ResultAllUserDto>();
+            CreateMap<AppUser, ResultUserDto>();
             CreateMap<AppUser, ResultloginDto>();
             CreateMap<AppChat, MessageResultDto>();
             CreateMap<SendMessageDto, AppChat>();

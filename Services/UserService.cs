@@ -8,16 +8,19 @@ using API.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace API.Services
 {
     public class UserService : IUserService
     {
         private readonly DataContext _dataContext;
+        private readonly ILogger _logger;
 
-        public UserService(DataContext dataContext)
+        public UserService(DataContext dataContext, ILogger logger)
         {
             _dataContext = dataContext;
+            _logger = logger;
         }
 
         public string GetConnectedUser(ClaimsPrincipal User)
@@ -29,8 +32,9 @@ namespace API.Services
 
                 return userId;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger.LogError("Error when claiming current user", ex.Message);
                 return "";
             }
         }
@@ -46,8 +50,9 @@ namespace API.Services
 
                 return true;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger.LogError("Error when claiming current user", ex.Message);
                 return false;
             }
         }
@@ -63,8 +68,9 @@ namespace API.Services
 
                 return false;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger.LogError("Error when checking if user exist", ex.Message);
                 return true;
             }
         }
@@ -92,8 +98,33 @@ namespace API.Services
 
                 return authToken;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger.LogError("Error when creating auth token", ex.Message);
+                return null;
+            }
+        }
+
+        public async Task<AppAuthToken?> AuthTokenIsValid(int? otp, string token, int type, int status = (int)StatusEnum.enable)
+        {
+            try
+            {
+                AppAuthToken? existingToken = null;
+
+                if (otp != null)
+                {
+                    existingToken = await _dataContext.AuthTokens.FirstOrDefaultAsync(t => t.Token == token && t.Otp == otp && t.UsageType == type && t.Status == status && t.ExpireAt > DateTime.UtcNow);
+                }
+                else
+                {
+                    existingToken = await _dataContext.AuthTokens.FirstOrDefaultAsync(t => t.Token == token && t.UsageType == type && t.Status == status && t.ExpireAt > DateTime.UtcNow);
+                }
+
+                return existingToken;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Error when validating auth token", ex.Message);
                 return null;
             }
         }
@@ -130,6 +161,83 @@ namespace API.Services
                 PasswordHash = PasswordHash,
                 PasswordSalt = PasswordSalt
             };
+        }
+
+        public async Task<bool> UserIdExist(string id)
+        {
+            var result = await _dataContext.Users.Where(x => x.Status == (int)StatusEnum.enable || x.Id.ToString() == id).AnyAsync();
+            return result;
+        }
+
+        public async Task<bool> UserNameExist(string username, string? userId)
+        {
+            if (userId != null)
+            {
+                return await _dataContext.Users.AnyAsync(x => x.UserName.ToLower() == username.ToLower() && x.Id.ToString() != userId);
+            }
+
+            return await _dataContext.Users.AnyAsync(x => x.UserName.ToLower() == username.ToLower());
+        }
+
+        public async Task<bool> UserEmailExist(string useremail, string? userId)
+        {
+            if (userId != null)
+            {
+                return await _dataContext.Users.AnyAsync((x) => x.Email != null && x.Email.ToLower() == useremail.ToLower() && x.Id.ToString() != userId);
+            }
+
+            return await _dataContext.Users.AnyAsync((x) => x.Email != null && x.Email.ToLower() == useremail.ToLower());
+        }
+
+        public AppUser? GetUserById(string id)
+        {
+            var result = _dataContext.Users.Where(x => x.Status == (int)StatusEnum.enable || x.Id.ToString() == id).FirstOrDefault();
+            return result;
+        }
+
+        public bool IsValidPassword(string password)
+        {
+            // Validate strong password
+            Regex validateGuidRegex = new("^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$");
+            var test = validateGuidRegex.IsMatch(password);
+            return test;
+        }
+
+        public bool UserPasswordIsValid(byte[] passwordSalt, byte[] passwordHash, string password)
+        {
+            using var hmac = new HMACSHA512(passwordSalt);
+            var computedHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(password));
+
+            for (int i = 0; i < computedHash.Length; i++)
+            {
+                if (computedHash[i] != passwordHash[i]) return false;
+            }
+
+            return true;
+        }
+
+        public async Task<bool> CheckGoogleAuthToken(string token = "", string urlHost = "")
+        {
+            try
+            {
+                string url = urlHost + "/tokeninfo?id_token=" + token;
+
+                var client = new HttpClient();
+                var result = await client.GetAsync(url);
+
+                if (result.IsSuccessStatusCode)
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            catch (Exception)
+            {
+                return false;
+            }
         }
     }
 }

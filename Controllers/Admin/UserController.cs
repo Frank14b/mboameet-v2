@@ -25,7 +25,7 @@ namespace API.Controllers.Admin
         }
 
         [HttpPost("")]
-        public async Task<ActionResult<ResultAllUserDto>> CreateUserAccount(CreateUserDto data)
+        public async Task<ActionResult<ResultUserDto>> CreateUserAccount(CreateUserDto data)
         {
             try
             {
@@ -43,7 +43,7 @@ namespace API.Controllers.Admin
                 _dataContext.Users.Add(newUser);
                 await _dataContext.SaveChangesAsync();
 
-                var result = _mapper.Map<ResultAllUserDto>(newUser);
+                var result = _mapper.Map<ResultUserDto>(newUser);
                 return Ok(result);
             }
             catch (Exception e)

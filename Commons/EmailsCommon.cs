@@ -18,17 +18,15 @@ namespace API.Commons
             _logger = logger;
         }
 
-        public async Task<bool> SendMail([FromForm] EmailRequestDto request)
+        public async Task SendMail([FromForm] EmailRequestDto request)
         {
             try
             {
                 await _mailService.SendEmailAsync(request);
-                return true;
             }
             catch (Exception e)
             {
                 _logger.LogError("An error occurred: {message}", e.Message);
-                return false;
             }
         }
 

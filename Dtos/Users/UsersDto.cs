@@ -215,7 +215,7 @@ namespace API.DTOs
         public DateTime UpdatedAt { get; set; }
     }
 
-    public class ResultAllUserDto
+    public class ResultUserDto
     {
         public required string Id { get; set; }
         public required string UserName { get; set; }
@@ -232,7 +232,7 @@ namespace API.DTOs
 
     public class ResultUsersPaginate
     {
-        public required IEnumerable<ResultAllUserDto> Data { get; set; }
+        public required IEnumerable<ResultUserDto> Data { get; set; }
         public required int Limit { get; set; }
         public required int Skip { get; set; }
         public required int Total { get; set; }
@@ -265,5 +265,22 @@ namespace API.DTOs
         public required byte[] PasswordHash { get; set; }
 
         public required byte[] PasswordSalt { get; set; }
+    }
+
+    public class UpdateProfile
+    {
+        [MinLength(3)]
+        public string? UserName { get; set; }
+
+        public string? FirstName { get; set; }
+
+        public string? LastName { get; set; }
+
+        [EmailAddress]
+        public string? Email { get; set; }
+
+        public string? Password { get; set; }
+
+        public int? Age { get; set; }
     }
 }

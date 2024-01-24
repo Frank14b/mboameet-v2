@@ -17,9 +17,9 @@ namespace API.DTOs
 
         public required string MatchedUserId { get; set; }
 
-        public required ResultAllUserDto User { get; set; }
+        public required ResultUserDto User { get; set; }
 
-        public ResultAllUserDto? MatchedUser { get; set; }
+        public ResultUserDto? MatchedUser { get; set; }
 
         [EnumDataType(typeof(MatchStateEnum))]
         public required int State { get; set; }

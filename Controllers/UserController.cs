@@ -13,6 +13,7 @@ using API.DTOs;
 using API.Commons;
 using API.Entities;
 using AutoMapper;
+using System.Reactive.Linq;
 
 namespace API.Controllers;
 
@@ -22,7 +23,6 @@ public class UsersController : BaseApiController
 {
     private readonly DataContext _context;
     private readonly ITokenService _tokenService;
-    private readonly UsersCommon _userCommon;
     private readonly EmailsCommon _emailsCommon;
     private readonly IMapper _mapper;
     private readonly IConfiguration _configuration;
@@ -41,7 +41,6 @@ public class UsersController : BaseApiController
         _context = context;
         _tokenService = tokenService;
         _mapper = mapper;
-        _userCommon = new UsersCommon(context);
         _configuration = configuration;
         _emailsCommon = new EmailsCommon(mailService, logger);
         _userService = userService;
@@ -52,11 +51,11 @@ public class UsersController : BaseApiController
     [HttpPost("")]
     public async Task<ActionResult<ResultloginDto>> RegisterUsers(RegisterDto data)
     {
-        if (await _userCommon.UserNameExist(data.Username)) return BadRequest("Username already in used");
+        if (await _userService.UserNameExist(data.Username, null)) return BadRequest("Username already in used");
 
-        if (await _userCommon.UserEmailExist(data?.Email ?? "")) return BadRequest("Email Address already in used");
+        if (await _userService.UserEmailExist(data?.Email ?? "", null)) return BadRequest("Email Address already in used");
 
-        if (!_userCommon.IsValidPassword(data?.Password ?? "")) return BadRequest("Password should have at least 1 lowercase letter, 1 uppercase letter, 1 digit, 1 special character, and at least 8 characters long");
+        if (!_userService.IsValidPassword(data?.Password ?? "")) return BadRequest("Password should have at least 1 lowercase letter, 1 uppercase letter, 1 digit, 1 special character, and at least 8 characters long");
 
         PassWordGeneratedDto password = _userService.GeneratePassword(data?.Password ?? "");
 
@@ -109,19 +108,13 @@ public class UsersController : BaseApiController
 
             if (result?.PasswordSalt != null)
             {
-                using var hmac = new HMACSHA512(result.PasswordSalt);
-                var computedHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(data.Password));
-
-                for (int i = 0; i < computedHash.Length; i++)
-                {
-                    if (computedHash[i] != result.PasswordHash[i]) return Unauthorized("Invalid Login / Password, User not found");
-                }
+                if (!_userService.UserPasswordIsValid(result.PasswordSalt, result.PasswordHash, data.Password)) return Unauthorized("Invalid Login / Password, User not found");
 
                 var finalresult = _mapper.Map<ResultloginDto>(result);
 
                 if (result.Status == (int)StatusEnum.disable) return Ok("Your account is disabled. Please Contact the admin");
 
-                var data_email = new EmailRequestDto
+                _ = _emailsCommon.SendMail(new EmailRequestDto
                 {
                     ToEmail = result?.Email ?? "",
                     ToName = result?.FirstName ?? "",
@@ -130,8 +123,7 @@ public class UsersController : BaseApiController
                     Subject = "Login Attempts",
                     Body = _emailsCommon.UserLoginBody(finalresult),
                     Attachments = { }
-                };
-                await _emailsCommon.SendMail(data_email);
+                });
 
                 finalresult.Token = _tokenService.CreateToken(result?.Id.ToString() ?? "", result?.Role ?? 0, true);
 
@@ -144,12 +136,13 @@ public class UsersController : BaseApiController
         }
         catch (Exception e)
         {
-            return BadRequest("An error occured or user not found " + e);
+            _logger.LogError("An error occured during login", e.Message);
+            return BadRequest("An error occured or user not found");
         }
     }
 
     [HttpGet("")]
-    public async Task<ActionResult<IEnumerable<ResultPaginate>>> GetUsers(int skip = 0, int limit = 50, string sort = "desc")
+    public async Task<ActionResult<IEnumerable<ResultPaginate<ResultUserDto>>>> GetUsers(int skip = 0, int limit = 50, string sort = "desc")
     {
         try
         {
@@ -177,12 +170,12 @@ public class UsersController : BaseApiController
             }
 
             // Map to DTO after fetching with included matches
-            var result = _mapper.Map<IEnumerable<ResultAllUserDto>>(users);
+            var result = _mapper.Map<IEnumerable<ResultUserDto>>(users);
 
             // Count before applying pagination for accuracy
             var totalCount = await query.CountAsync();
             //
-            return Ok(new ResultPaginate
+            return Ok(new ResultPaginate<ResultUserDto>
             {
                 Data = result,
                 Limit = limit,
@@ -192,20 +185,21 @@ public class UsersController : BaseApiController
         }
         catch (Exception e)
         {
-            return BadRequest("An error occurred or user not found " + e); // Log exception details separately
+            _logger.LogError("An error occured while getting users", e.Message);
+            return BadRequest("An error occurred or user not found"); // Log exception details separately
         }
     }
 
     [HttpPost("validate-token")]
-    public async Task<ActionResult<ResultAllUserDto>> ValidateToken()
+    public async Task<ActionResult<ResultUserDto>> ValidateToken()
     {
         string id = _userService.GetConnectedUser(User);
 
-        if (!await _userCommon.UserIdExist(id)) return BadRequest("User not found");
+        if (!await _userService.UserIdExist(id)) return BadRequest("User not found");
 
         var user = await _context.Users.Where(x => x.Id.ToString() == id).FirstAsync();
 
-        var result = _mapper.Map<ResultAllUserDto>(user);
+        var result = _mapper.Map<ResultUserDto>(user);
 
         return Ok(result);
     }
@@ -263,7 +257,7 @@ public class UsersController : BaseApiController
     {
         try
         {
-            var existingToken = await _context.AuthTokens.FirstOrDefaultAsync(t => t.Token == data.Token && t.Otp == data.Otp && t.UsageType == data.Type && t.Status == (int)StatusEnum.enable);
+            var existingToken = await _userService.AuthTokenIsValid(data.Otp, data.Token, data.Type);
             if (existingToken == null) return NotFound("Invalid token or otp code");
 
             // validate and update the token usage/status for reusability purposes
@@ -273,6 +267,7 @@ public class UsersController : BaseApiController
 
                 existingToken.UsageType = (int)TokenUsageTypeEnum.resetPassword;
                 existingToken.Token = token;
+                existingToken.ExpireAt = DateTime.UtcNow.AddMinutes(AppConstants.TokenValidity);
             }
             else
             {
@@ -289,7 +284,8 @@ public class UsersController : BaseApiController
         }
         catch (Exception e)
         {
-            return BadRequest("An error occured or invalid token " + e);
+            _logger.LogError("An error occured", e.Message);
+            return BadRequest("An error occured or invalid token ");
         }
     }
 
@@ -298,7 +294,7 @@ public class UsersController : BaseApiController
     {
         try
         {
-            var existingToken = await _context.AuthTokens.FirstOrDefaultAsync(t => t.Token == data.Token && t.UsageType == (int)TokenUsageTypeEnum.resetPassword && t.Status == (int)StatusEnum.enable);
+            var existingToken = await _userService.AuthTokenIsValid(null, data.Token, (int)TokenUsageTypeEnum.resetPassword);
             if (existingToken == null) return NotFound("Invalid token");
 
             existingToken.Status = (int)StatusEnum.disable;
@@ -314,7 +310,8 @@ public class UsersController : BaseApiController
             user.PasswordSalt = password.PasswordSalt;
             await _context.SaveChangesAsync();
 
-            await _emailsCommon.SendMail(new EmailRequestDto
+
+            _ = _emailsCommon.SendMail(new EmailRequestDto
             {
                 ToEmail = user?.Email ?? "",
                 ToName = user?.FirstName ?? "",
@@ -333,7 +330,52 @@ public class UsersController : BaseApiController
         }
         catch (Exception e)
         {
-            return BadRequest("An error occured " + e);
+            _logger.LogError("An error occured", e.Message);
+            return BadRequest("An error occured ");
+        }
+    }
+
+    [HttpPut("")]
+    public async Task<ActionResult<ResultUserDto>> Update(UpdateProfile data)
+    {
+        try
+        {
+            string userId = _userService.GetConnectedUser(User);
+
+            AppUser? user = await _context.Users.FirstOrDefaultAsync(u => u.Id.ToString() == userId);
+
+            if (user == null) return BadRequest("An error occured");
+
+            if (data?.UserName != null)
+            {
+                if (await _userService.UserNameExist(data.UserName, userId)) return BadRequest("UserName already exists");
+
+                user.UserName = data.UserName;
+            }
+
+            if (data?.Email != null)
+            {
+                if (data?.Password == null) return BadRequest("Password is required to update the profile email"); // return error if trying to update email without providing current password
+
+                if (!_userService.UserPasswordIsValid(user.PasswordSalt, user.PasswordHash, data.Password)) return Unauthorized("Invalid Password");
+
+                if (await _userService.UserEmailExist(data.Email, userId)) return BadRequest("Email already exists"); // return error if email already exist
+
+                user.Email = data.Email;
+            }
+
+            user.FirstName = data?.FirstName ?? user.FirstName;
+            user.LastName = data?.LastName ?? user.LastName;
+            user.Age = data?.Age ?? user.Age;
+
+            await _context.SaveChangesAsync();
+
+            return Ok(_mapper.Map<ResultUserDto>(user));
+        }
+        catch (Exception e)
+        {
+            _logger.LogError("An error occured during profile update", e.Message);
+            return BadRequest("An error occured ");
         }
     }
 }

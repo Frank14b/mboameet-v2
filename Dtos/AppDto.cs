@@ -30,10 +30,17 @@ public enum EnumMessageType
     callnotification = 4
 }
 
-public class ResultPaginate
+public class ResultPaginate<T>
 {
-    public required IEnumerable<dynamic> Data { get; set; }
+    public required IEnumerable<T> Data { get; set; } // good practice
     public required int Limit { get; set; }
     public required int Skip { get; set; }
     public required int Total { get; set; }
 }
+
+public static class AppConstants
+{
+    public const int TokenValidity = 10;
+    public const string Deletedkeyword = "deleted_";
+}
+
