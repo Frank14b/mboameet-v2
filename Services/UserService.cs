@@ -35,7 +35,7 @@ namespace API.Services
             catch (Exception ex)
             {
                 _logger.LogError("Error when claiming current user", ex.Message);
-                return "";
+                throw;
             }
         }
 
