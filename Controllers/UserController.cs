@@ -394,6 +394,17 @@ public class UsersController : BaseApiController
 
             await _context.SaveChangesAsync();
 
+            _ = _emailsCommon.SendMail(new EmailRequestDto
+            {
+                ToEmail = user?.Email ?? "",
+                ToName = user?.FirstName ?? "",
+                SubTitle = "Account Deleted",
+                ReplyToEmail = "",
+                Subject = "Account Delition Confirmation",
+                Body = _emailsCommon.ChangePasswordBody(user),
+                Attachments = { }
+            });
+
             return Ok(new BooleanReturnDto
             {
                 Status = true,
