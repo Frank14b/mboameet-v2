@@ -1,5 +1,4 @@
 using System;
-using System.Data.Common;
 using System.Security.Claims;
 using API.Data;
 using API.DTOs;
@@ -15,11 +14,17 @@ namespace API.Services
     public class UserService : IUserService
     {
         private readonly DataContext _dataContext;
-        private readonly ILogger _logger;
+        private readonly IMailService _mailService;
+        private readonly ILogger<UserService> _logger;
 
-        public UserService(DataContext dataContext, ILogger logger)
+        public UserService(
+            DataContext dataContext,
+            IMailService mailService,
+            ILogger<UserService> logger
+        )
         {
             _dataContext = dataContext;
+            _mailService = mailService;
             _logger = logger;
         }
 
@@ -34,7 +39,7 @@ namespace API.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError("Error when claiming current user", ex.Message);
+                _logger.LogError("GetConnectedUser ${message}", ex.Message);
                 throw;
             }
         }
@@ -52,8 +57,8 @@ namespace API.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError("Error when claiming current user", ex.Message);
-                return false;
+                _logger.LogError("IsUserConnected ${message}", ex.Message);
+                throw;
             }
         }
 
@@ -70,8 +75,8 @@ namespace API.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError("Error when checking if user exist", ex.Message);
-                return true;
+                _logger.LogError("IsUserAlreadyExist ${message}", ex.Message);
+                throw;
             }
         }
 
@@ -100,7 +105,7 @@ namespace API.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError("Error when creating auth token", ex.Message);
+                _logger.LogError("CreateAuthToken ${message}", ex.Message);
                 return null;
             }
         }
@@ -124,7 +129,7 @@ namespace API.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError("Error when validating auth token", ex.Message);
+                _logger.LogError("AuthTokenIsValid ${message}", ex.Message);
                 return null;
             }
         }
@@ -189,10 +194,18 @@ namespace API.Services
             return await _dataContext.Users.AnyAsync((x) => x.Email != null && x.Email.ToLower() == useremail.ToLower());
         }
 
-        public AppUser? GetUserById(string id)
+        public async Task<AppUser?> GetUserById(string id)
         {
-            var result = _dataContext.Users.Where(x => x.Status == (int)StatusEnum.enable || x.Id.ToString() == id).FirstOrDefault();
-            return result;
+            try
+            {
+                var result = await _dataContext.Users.Where(x => x.Status == (int)StatusEnum.enable && x.Id.ToString() == id).FirstAsync();
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Error GetUserById ${message}", ex);
+                return null;
+            }
         }
 
         public bool IsValidPassword(string password)
@@ -237,6 +250,82 @@ namespace API.Services
             catch (Exception)
             {
                 return false;
+            }
+        }
+
+        public async Task<AppUser?> CreateUserAccount(RegisterDto? data)
+        {
+            try
+            {
+                PassWordGeneratedDto password = GeneratePassword(data?.Password ?? "");
+
+                var user = new AppUser
+                {
+                    UserName = data?.Username ?? "",
+                    PasswordHash = password.PasswordHash,
+                    PasswordSalt = password.PasswordSalt,
+                    FirstName = data?.Firstname,
+                    LastName = data?.Lastname,
+                    Email = data?.Email,
+                    Age = 18,
+                    Role = (int)RoleEnum.user,
+                    Status = (int)StatusEnum.enable,
+                    UpdatedAt = DateTime.UtcNow,
+                };
+
+                await _dataContext.Users.AddAsync(user);
+                await _dataContext.SaveChangesAsync();
+
+                _ = _mailService.SendEmailAsync(new EmailRequestDto
+                {
+                    ToEmail = user?.Email ?? "",
+                    ToName = user?.FirstName ?? "",
+                    SubTitle = "User Registration",
+                    ReplyToEmail = "",
+                    Subject = "User Registration",
+                    Body = _mailService.UserRegisterBody(user),
+                    Attachments = { }
+                });
+
+                return user;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("CreateUserAccount ${message}", ex.Message);
+                return null;
+            }
+        }
+
+        public async Task<AppUser?> AuthenticateUser(LoginDto data)
+        {
+            try
+            {
+                var user = await _dataContext.Users.FirstOrDefaultAsync(x => ((x.UserName == data.Login) || (x.Email == data.Login)) && x.Role != (int)RoleEnum.suadmin && x.Status != (int)StatusEnum.delete);
+
+                if (user?.PasswordSalt != null)
+                {
+                    if (!UserPasswordIsValid(user.PasswordSalt, user.PasswordHash, data.Password)) return null;
+
+                    _ = _mailService.SendEmailAsync(new EmailRequestDto
+                    {
+                        ToEmail = user?.Email ?? "",
+                        ToName = user?.FirstName ?? "",
+                        SubTitle = "Login Attempts",
+                        ReplyToEmail = "",
+                        Subject = "Login Attempts",
+                        Body = _mailService.UserLoginBody(user),
+                        Attachments = { }
+                    });
+
+                    return user;
+                }
+
+                return null;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Authentication ${message}", ex.Message);
+                return null;
             }
         }
     }

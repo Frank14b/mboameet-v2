@@ -10,7 +10,6 @@ namespace API.Entities
     public class AppUser
     {
         [BsonId]
-        // [BsonRepresentation(BsonType.ObjectId)]
         public ObjectId Id { get; set; }
 
         [MinLength(3)]
@@ -36,8 +35,6 @@ namespace API.Entities
         public int Age { get; set; }
 
         public ICollection<AppMatch>? Match { get; set; }
-
-        // public List<AppUserProperty> UserProperties { get; set; } = new();
 
         public DateTime LastLogin { get; set; }
 

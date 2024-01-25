@@ -2,7 +2,10 @@ using API.Data;
 using API.DTOs;
 using API.Entities;
 using API.Interfaces;
+using AutoMapper;
+using Discord;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using MongoDB.Bson;
 
 namespace API.Services;
@@ -11,12 +14,24 @@ public class MatchService : IMatchService
 {
 
     private readonly DataContext _dataContext;
-    private readonly ILogger _logger;
+    private readonly ILogger<MatchService> _logger;
+    private readonly IMapper _mapper;
+    private readonly IMemoryCache _memoryCache;
+    private readonly IUserService _userService;
 
-    public MatchService(DataContext context, ILogger logger)
+
+    public MatchService(
+        DataContext context,
+        ILogger<MatchService> logger,
+        IMapper mapper,
+        IMemoryCache memoryCache,
+        IUserService userService)
     {
         _dataContext = context;
         _logger = logger;
+        _mapper = mapper;
+        _memoryCache = memoryCache;
+        _userService = userService;
     }
 
     public async Task<BooleanReturnDto> CheckIfUserIsMatch(string user, string matchUser)
@@ -273,6 +288,97 @@ public class MatchService : IMatchService
                 Status = false,
                 Message = "Error when cancelling user match"
             };
+        }
+    }
+
+    public async Task<MatchesResultDto?> CreateUserMatch(string userId, AddMatchDto data)
+    {
+        try
+        {
+            BooleanReturnDto receivedRequest = await CheckIfUserReceivedMatchRequest(userId, data.MatchedUserId, (int)MatchStateEnum.inititated);
+
+            if (receivedRequest.Status)
+            {
+                if (receivedRequest?.Data != null)
+                {
+                    AppMatch currentRequest = receivedRequest.Data;
+                    currentRequest.State = (int)MatchStateEnum.approved;
+                    await _dataContext.SaveChangesAsync();
+
+                    var match = _mapper.Map<MatchesResultDto>(currentRequest);
+                    return match;
+                }
+            }
+
+            var newMatch = new AppMatch
+            {
+                MatchedUserId = ObjectId.Parse(data.MatchedUserId),
+                UserId = ObjectId.Parse(userId),
+            };
+
+            _dataContext.Add(newMatch);
+            await _dataContext.SaveChangesAsync();
+
+            return _mapper.Map<MatchesResultDto>(newMatch);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError("error when cancelling user match", ex.Message);
+            return null;
+        }
+    }
+
+    public async Task<ResultPaginate<MatchesResultDto>?> GetUserMatches(string userId, int skip = 0, int limit = 50, string sort = "desc")
+    {
+        try
+        {
+            //check if matches data are cached
+            string cacheKey = "matches_" + userId + "_" + sort + "_" + skip + "_" + limit;
+            ///
+            dynamic? cachedMatches = _memoryCache.Get(cacheKey);
+
+            if (cachedMatches != null)
+            {
+                return cachedMatches;
+            }
+
+            //////
+            var query = _dataContext.Matches.Where(m => m.Status == (int)StatusEnum.enable && m.State == (int)MatchStateEnum.approved && (m.UserId.ToString() == userId || m.MatchedUserId.ToString() == userId));
+
+            // Apply sorting directly in the query
+            query = sort == "desc"
+                ? query.OrderByDescending(x => x.CreatedAt)
+                : query.OrderBy(x => x.CreatedAt);
+
+            var totalMatches = await query.CountAsync();
+
+            var matches = await query.Skip(skip).Take(limit).ToListAsync(); //.Include(p => p.Users)
+
+            foreach (var match in matches)
+            {
+                match.User = await _userService.GetUserById(match.UserId.ToString());
+                match.MatchedUser = await _userService.GetUserById(match.MatchedUserId.ToString());
+            }
+
+            var result = _mapper.Map<IEnumerable<MatchesResultDto>>(matches);
+
+            ResultPaginate<MatchesResultDto> response = new()
+            {
+                Data = result,
+                Limit = limit,
+                Skip = skip,
+                Total = totalMatches
+            };
+
+            _memoryCache.Set(cacheKey, response, new MemoryCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5) });  //add the matches data in cached
+            _memoryCache.Set(cacheKey + "_entities", result, new MemoryCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5) });
+
+            return response;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError("error when getting all users matches ${message}", ex.Message);
+            return null;
         }
     }
 }

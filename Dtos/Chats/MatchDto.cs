@@ -17,7 +17,7 @@ namespace API.DTOs
 
         public required string MatchedUserId { get; set; }
 
-        public required ResultUserDto User { get; set; }
+        public ResultUserDto? User { get; set; }
 
         public ResultUserDto? MatchedUser { get; set; }
 

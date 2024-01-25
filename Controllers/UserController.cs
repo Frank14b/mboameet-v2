@@ -18,7 +18,7 @@ public class UsersController : BaseApiController
 {
     private readonly DataContext _context;
     private readonly ITokenService _tokenService;
-    private readonly EmailsCommon _emailsCommon;
+    // private readonly EmailsCommon _emailsCommon;
     private readonly IMapper _mapper;
     private readonly IConfiguration _configuration;
     private readonly IUserService _userService;
@@ -30,16 +30,17 @@ public class UsersController : BaseApiController
         ITokenService tokenService,
         IMapper mapper,
         IConfiguration configuration,
-        IMailService mailService,
         IUserService userService,
         ILogger<UsersController> logger,
-        IMemoryCache memoryCache)
+        IMemoryCache memoryCache
+        // EmailsCommon emailsCommon
+        )
     {
         _context = context;
         _tokenService = tokenService;
         _mapper = mapper;
         _configuration = configuration;
-        _emailsCommon = new EmailsCommon(mailService, logger);
+        // _emailsCommon = emailsCommon;
         _userService = userService;
         _logger = logger;
         _memoryCache = memoryCache;
@@ -55,43 +56,15 @@ public class UsersController : BaseApiController
 
         if (!_userService.IsValidPassword(data?.Password ?? "")) return BadRequest("Password should have at least 1 lowercase letter, 1 uppercase letter, 1 digit, 1 special character, and at least 8 characters long");
 
-        PassWordGeneratedDto password = _userService.GeneratePassword(data?.Password ?? "");
+        AppUser? user = await _userService.CreateUserAccount(data);
 
-        var user = new AppUser
-        {
-            UserName = data?.Username ?? "",
-            PasswordHash = password.PasswordHash,
-            PasswordSalt = password.PasswordSalt,
-            FirstName = data?.Firstname,
-            LastName = data?.Lastname,
-            Email = data?.Email,
-            Age = 18,
-            Role = (int)RoleEnum.user,
-            Status = (int)StatusEnum.enable,
-            UpdatedAt = DateTime.UtcNow,
-        };
+        if (user == null) return BadRequest("Couldn't create user account. Please try again later.");
 
-        _context.Users.Add(user);
+        ResultloginDto result = _mapper.Map<ResultloginDto>(user);
 
-        await _context.SaveChangesAsync();
+        result.Token = _tokenService.CreateToken(user.Id.ToString(), user.Role, true);
 
-        var finalresult = _mapper.Map<ResultloginDto>(user);
-
-        finalresult.Token = _tokenService.CreateToken(user.Id.ToString(), user.Role, true);
-
-        var data_email = new EmailRequestDto
-        {
-            ToEmail = user?.Email ?? "",
-            ToName = user?.FirstName ?? "",
-            SubTitle = "User Registration",
-            ReplyToEmail = "",
-            Subject = "User Registration",
-            Body = _emailsCommon.UserRegisterBody(user),
-            Attachments = { }
-        };
-        await _emailsCommon.SendMail(data_email);
-
-        return Ok(finalresult);
+        return Ok(result);
     }
 
     [AllowAnonymous]
@@ -100,41 +73,23 @@ public class UsersController : BaseApiController
     {
         try
         {
-            var result = await _context.Users.SingleOrDefaultAsync(x => ((x.UserName == data.Login) || (x.Email == data.Login)) && x.Role != (int)RoleEnum.suadmin && x.Status != (int)StatusEnum.delete);
+            if (data == null) return BadRequest("Invalid Login / Password, User not found");
 
-            if (result == null) Unauthorized("Invalid Login / Password, User not found");
+            AppUser? user = await _userService.AuthenticateUser(data);
 
-            if (result?.PasswordSalt != null)
-            {
-                if (!_userService.UserPasswordIsValid(result.PasswordSalt, result.PasswordHash, data.Password)) return Unauthorized("Invalid Login / Password, User not found");
+            if (user == null) return BadRequest("Couldn't login user. Invalid Login / Password, User not found");
 
-                var finalresult = _mapper.Map<ResultloginDto>(result);
+            if (user.Status == (int)StatusEnum.disable) return Ok("Your account is disabled. Please Contact the admin");
 
-                if (result.Status == (int)StatusEnum.disable) return Ok("Your account is disabled. Please Contact the admin");
+            // create user auth token
+            var result = _mapper.Map<ResultloginDto>(user);
+            result.Token = _tokenService.CreateToken(result?.Id.ToString() ?? "", user?.Role ?? 0, true);
 
-                _ = _emailsCommon.SendMail(new EmailRequestDto
-                {
-                    ToEmail = result?.Email ?? "",
-                    ToName = result?.FirstName ?? "",
-                    SubTitle = "Login Attempts",
-                    ReplyToEmail = "",
-                    Subject = "Login Attempts",
-                    Body = _emailsCommon.UserLoginBody(finalresult),
-                    Attachments = { }
-                });
-
-                finalresult.Token = _tokenService.CreateToken(result?.Id.ToString() ?? "", result?.Role ?? 0, true);
-
-                return Ok(finalresult);
-            }
-            else
-            {
-                return BadRequest("An error occured or user not found");
-            }
+            return Ok(result);
         }
         catch (Exception e)
         {
-            _logger.LogError("An error occured during login", e.Message);
+            _logger.LogError("An error occured during login ${message}", e.Message);
             return BadRequest("An error occured or user not found");
         }
     }
@@ -185,7 +140,7 @@ public class UsersController : BaseApiController
         }
         catch (Exception e)
         {
-            _logger.LogError("An error occured while getting users", e.Message);
+            _logger.LogError("An error occured while getting users ${message}", e.Message);
             return BadRequest("An error occurred or user not found"); // Log exception details separately
         }
     }
@@ -234,21 +189,21 @@ public class UsersController : BaseApiController
             if (otpData == null) return BadRequest("An error occured please retry later");
 
             //send the otp code token trough email
-            await _emailsCommon.SendMail(new EmailRequestDto
-            {
-                ToEmail = user?.Email ?? "",
-                ToName = user?.FirstName ?? "",
-                SubTitle = "Forget Password",
-                ReplyToEmail = "",
-                Subject = "Forget Password Request",
-                Body = _emailsCommon.UserForgetPasswordBody(new ForgetPasswordEmailDto
-                {
-                    UserName = user?.UserName ?? "",
-                    Otp = otpData.Otp,
-                    Link = ""
-                }),
-                Attachments = { }
-            });
+            // await _emailsCommon.SendMail(new EmailRequestDto
+            // {
+            //     ToEmail = user?.Email ?? "",
+            //     ToName = user?.FirstName ?? "",
+            //     SubTitle = "Forget Password",
+            //     ReplyToEmail = "",
+            //     Subject = "Forget Password Request",
+            //     Body = _emailsCommon.UserForgetPasswordBody(new ForgetPasswordEmailDto
+            //     {
+            //         UserName = user?.UserName ?? "",
+            //         Otp = otpData.Otp,
+            //         Link = ""
+            //     }),
+            //     Attachments = { }
+            // });
 
             return Ok(new ResultForgetPasswordDto
             {
@@ -295,7 +250,7 @@ public class UsersController : BaseApiController
         }
         catch (Exception e)
         {
-            _logger.LogError("An error occured", e.Message);
+            _logger.LogError("An error occured ${message}", e.Message);
             return BadRequest("An error occured or invalid token ");
         }
     }
@@ -322,16 +277,16 @@ public class UsersController : BaseApiController
             await _context.SaveChangesAsync();
 
 
-            _ = _emailsCommon.SendMail(new EmailRequestDto
-            {
-                ToEmail = user?.Email ?? "",
-                ToName = user?.FirstName ?? "",
-                SubTitle = "Password Change",
-                ReplyToEmail = "",
-                Subject = "Password Change Confirmation",
-                Body = _emailsCommon.ChangePasswordBody(user),
-                Attachments = { }
-            });
+            // _ = _emailsCommon.SendMail(new EmailRequestDto
+            // {
+            //     ToEmail = user?.Email ?? "",
+            //     ToName = user?.FirstName ?? "",
+            //     SubTitle = "Password Change",
+            //     ReplyToEmail = "",
+            //     Subject = "Password Change Confirmation",
+            //     Body = _emailsCommon.ChangePasswordBody(user),
+            //     Attachments = { }
+            // });
 
             return Ok(new BooleanReturnDto
             {
@@ -341,7 +296,7 @@ public class UsersController : BaseApiController
         }
         catch (Exception e)
         {
-            _logger.LogError("An error occured", e.Message);
+            _logger.LogError("An error occured ${message}", e.Message);
             return BadRequest("An error occured ");
         }
     }
@@ -385,7 +340,7 @@ public class UsersController : BaseApiController
         }
         catch (Exception e)
         {
-            _logger.LogError("An error occured during profile update", e.Message);
+            _logger.LogError("An error occured during profile update ${message}", e.Message);
             return BadRequest("An error occured ");
         }
     }
@@ -411,16 +366,16 @@ public class UsersController : BaseApiController
 
             await _context.SaveChangesAsync();
 
-            _ = _emailsCommon.SendMail(new EmailRequestDto
-            {
-                ToEmail = user?.Email ?? "",
-                ToName = user?.FirstName ?? "",
-                SubTitle = "Account Deleted",
-                ReplyToEmail = "",
-                Subject = "Account Delition Confirmation",
-                Body = _emailsCommon.DeleteAccountBody(user),
-                Attachments = { }
-            });
+            // _ = _emailsCommon.SendMail(new EmailRequestDto
+            // {
+            //     ToEmail = user?.Email ?? "",
+            //     ToName = user?.FirstName ?? "",
+            //     SubTitle = "Account Deleted",
+            //     ReplyToEmail = "",
+            //     Subject = "Account Delition Confirmation",
+            //     Body = _emailsCommon.DeleteAccountBody(user),
+            //     Attachments = { }
+            // });
 
             return Ok(new BooleanReturnDto
             {
@@ -430,7 +385,7 @@ public class UsersController : BaseApiController
         }
         catch (Exception e)
         {
-            _logger.LogError("An error occured while deleting account", e.Message);
+            _logger.LogError("An error occured while deleting account ${message}", e.Message);
             return BadRequest("An error occured ");
         }
     }

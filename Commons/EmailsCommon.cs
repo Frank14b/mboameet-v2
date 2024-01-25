@@ -30,9 +30,9 @@ namespace API.Commons
             }
         }
 
-        public string UserLoginBody(ResultloginDto data)
+        public string UserLoginBody(AppUser? data)
         {
-            string body = "<div> <p>Dear " + data.FirstName + ",</p><br/>"
+            string body = "<div> <p>Dear " + data?.UserName + ",</p><br/>"
                            + "<p>We are pleased to inform you that you have successfully logged in to your account on " + DateTime.UtcNow
                            + " GMT from .This email is to confirm that the login was authorized by you to access your account.</p>"
                            + "<br/> <p>If you did not authorize this login, please contact us immediately at " + supportEmail

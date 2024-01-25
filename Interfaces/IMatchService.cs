@@ -14,5 +14,7 @@ namespace API.Interfaces
         Task<BooleanReturnDto> DeleteUserMatchRequest(string userId, string id);
         Task<BooleanReturnDto> ReplyMatchRequest(string userId, string action, string id);
         Task<BooleanReturnDto> CancelMatchRequest(string userId, string id);
+        Task<MatchesResultDto?> CreateUserMatch(string userId, AddMatchDto data);
+        Task<ResultPaginate<MatchesResultDto>?> GetUserMatches(string userId, int skip = 0, int limit = 50, string sort = "desc");
     }
 }
