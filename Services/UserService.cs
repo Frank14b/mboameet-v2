@@ -165,7 +165,7 @@ namespace API.Services
 
         public async Task<bool> UserIdExist(string id)
         {
-            var result = await _dataContext.Users.Where(x => x.Status == (int)StatusEnum.enable || x.Id.ToString() == id).AnyAsync();
+            var result = await _dataContext.Users.AnyAsync(x => x.Status == (int)StatusEnum.enable && x.Id.ToString() == id);
             return result;
         }
 

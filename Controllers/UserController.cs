@@ -8,6 +8,7 @@ using API.Commons;
 using API.Entities;
 using AutoMapper;
 using System.Reactive.Linq;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace API.Controllers;
 
@@ -22,6 +23,7 @@ public class UsersController : BaseApiController
     private readonly IConfiguration _configuration;
     private readonly IUserService _userService;
     public readonly ILogger _logger;
+    private readonly IMemoryCache _memoryCache;
 
     public UsersController(
         DataContext context,
@@ -30,7 +32,8 @@ public class UsersController : BaseApiController
         IConfiguration configuration,
         IMailService mailService,
         IUserService userService,
-        ILogger<UsersController> logger)
+        ILogger<UsersController> logger,
+        IMemoryCache memoryCache)
     {
         _context = context;
         _tokenService = tokenService;
@@ -39,6 +42,7 @@ public class UsersController : BaseApiController
         _emailsCommon = new EmailsCommon(mailService, logger);
         _userService = userService;
         _logger = logger;
+        _memoryCache = memoryCache;
     }
 
     [AllowAnonymous]
@@ -140,8 +144,10 @@ public class UsersController : BaseApiController
     {
         try
         {
+            string userId = _userService.GetConnectedUser(User);
+
             var query = _context.Users
-                .Where(x => x.Role != (int)RoleEnum.suadmin && x.Status != (int)StatusEnum.delete);
+                .Where(x => x.Role != (int)RoleEnum.suadmin && x.Status != (int)StatusEnum.delete && x.Id.ToString() != userId);
 
             // Apply sorting directly in the query
             query = sort == "desc"
@@ -191,9 +197,20 @@ public class UsersController : BaseApiController
 
         if (!await _userService.UserIdExist(id)) return BadRequest("User not found");
 
-        var user = await _context.Users.Where(x => x.Id.ToString() == id).FirstAsync();
+        //check if the user data is cached
+        string cacheKey = "user_" + id;
+        var cachedMatches = _memoryCache.Get(cacheKey);
+
+        if (cachedMatches != null)
+        {
+            return Ok(cachedMatches);
+        }
+
+        var user = await _context.Users.Where(x => x.Id.ToString() == id).FirstOrDefaultAsync();
 
         var result = _mapper.Map<ResultUserDto>(user);
+
+        _memoryCache.Set(cacheKey, result, new MemoryCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5) }); //add the user data in cached
 
         return Ok(result);
     }
@@ -401,7 +418,7 @@ public class UsersController : BaseApiController
                 SubTitle = "Account Deleted",
                 ReplyToEmail = "",
                 Subject = "Account Delition Confirmation",
-                Body = _emailsCommon.ChangePasswordBody(user),
+                Body = _emailsCommon.DeleteAccountBody(user),
                 Attachments = { }
             });
 

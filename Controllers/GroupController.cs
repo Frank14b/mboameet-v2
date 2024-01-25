@@ -1,12 +1,10 @@
 using API.Data;
 using API.DTOs;
-using API.Entities;
 using API.Interfaces;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using MongoDB.Bson;
 using MongoDB.Driver.Linq;
 
 namespace API.Controllers;
@@ -15,7 +13,6 @@ namespace API.Controllers;
 [Route("api/v1/groups")]
 public class GroupController : BaseApiController
 {
-
     private readonly DataContext _dataContext;
     private readonly IMapper _mapper;
     private readonly IUserService _userService;
@@ -45,17 +42,12 @@ public class GroupController : BaseApiController
         {
             string id = _userService.GetConnectedUser(User);
 
-            if (!await _groupService.CheckIfUserGroupExist(id, data.Name)) return BadRequest("Group name already exists");
+            if (!await _groupService.CheckIfUserGroupExist(id, data.Name)) return BadRequest("Group name already exists"); // check if the group already exists
 
-            var newGroup = _mapper.Map<AppGroup>(data);
-            newGroup.UserId = ObjectId.Parse(id);
+            GroupListDto? group = await _groupService.CreateNewGroup(id, data);
+            if (group == null) return BadRequest("An error occured please try again");
 
-            await _dataContext.AddAsync(newGroup);
-            await _dataContext.SaveChangesAsync();
-
-            var result = _mapper.Map<GroupListDto>(newGroup);
-
-            return result;
+            return group;
         }
         catch (Exception ex)
         {
@@ -108,22 +100,15 @@ public class GroupController : BaseApiController
         {
             string userId = _userService.GetConnectedUser(User);
             //check if the group exist and not belonging to the user
-            bool group = await _dataContext.Groups.AnyAsync(g => g.Id.ToString() == id && g.UserId.ToString() != userId);
-            if (!group) return NotFound("Invalid Group Id");
+            bool isOwner = await _groupService.CheckIfUserCreatedTheGroup(id, userId);
+            if (isOwner) return NotFound("Invalid Group Id");
 
             //check if the user is not yet in the group
             bool groupUser = await _groupService.CheckIfUserIsInTheGroup(userId, id);
             if (!groupUser) return NotFound("Invalid Group Id");
 
-            AppGroupUser newGroupUser = new()
-            {
-                UserId = ObjectId.Parse(userId),
-                GroupId = ObjectId.Parse(id),
-                GroupAccesId = ObjectId.Parse(data.GroupAccesId)
-            };
-
-            await _dataContext.GroupUsers.AddAsync(newGroupUser);
-            await _dataContext.SaveChangesAsync();
+            bool joinGroup = await _groupService.JoinTheGroup(id, userId, data);
+            if (!joinGroup) return BadRequest("An error occured please try again");
 
             return Ok(new BooleanReturnDto()
             {
@@ -144,12 +129,9 @@ public class GroupController : BaseApiController
         try
         {
             string userId = _userService.GetConnectedUser(User);
-            //check if the group exist and not belonging to the user
-            AppGroup? group = await _dataContext.Groups.FirstOrDefaultAsync(g => g.Id.ToString() == id && g.UserId.ToString() == userId);
-            if (group == null) return NotFound("Invalid Group Id / group not found");
-
-            group.Status = (int)StatusEnum.delete;
-            await _dataContext.SaveChangesAsync();
+            //check if the group exist and belongs to the user
+            bool group = await _groupService.DeleteGroupById(id, userId);
+            if (!group) return NotFound("Invalid Group Id / group not found");
 
             return Ok(new BooleanReturnDto()
             {
@@ -170,15 +152,9 @@ public class GroupController : BaseApiController
         try
         {
             string userId = _userService.GetConnectedUser(User);
-            //check if the group exist and not belonging to the user
-            AppGroup? group = await _dataContext.Groups.FirstOrDefaultAsync(g => g.Id.ToString() == id && g.UserId.ToString() == userId);
-            if (group == null) return NotFound("Invalid Group Id / group not found");
-
-            group.Name = data?.Name ?? group.Name;
-            group.Description = data?.Name ?? group.Description;
-            group.Type = data?.Name ?? group.Type;
-
-            await _dataContext.SaveChangesAsync();
+            //check if the group exist and belongs to the user and update
+            bool group = await _groupService.UpdateGroupById(id, data, userId);
+            if (!group) return NotFound("Invalid Group Id / group not found");
 
             return Ok(new BooleanReturnDto()
             {
