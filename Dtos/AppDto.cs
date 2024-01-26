@@ -42,5 +42,7 @@ public static class AppConstants
 {
     public const int TokenValidity = 10;
     public const string Deletedkeyword = "deleted_";
+    public const string PasswordRegularExp = "^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$";
+    public const int PasswordMinLength = 8;
 }
 

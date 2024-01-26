@@ -7,9 +7,12 @@ namespace API.DTOs;
 public class LoginDto
 {
     [Required]
+    [MinLength(3)]
     public required string Login { get; set; }
 
     [Required]
+    [MinLength(AppConstants.PasswordMinLength)]
+    [RegularExpression(AppConstants.PasswordRegularExp)]
     public required string Password { get; set; }
 }
 
@@ -30,8 +33,8 @@ public class RegisterDto
     public string? Email { get; set; }
 
     [Required]
-    [MinLength(8)]
-    [RegularExpression("^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$")]
+    [MinLength(AppConstants.PasswordMinLength)]
+    [RegularExpression(AppConstants.PasswordRegularExp)]
     public required string Password { get; set; }
 }
 
@@ -93,11 +96,11 @@ public class UpdateProfileDto
     public string? Email { get; set; }
 
     [Required]
-    [MinLength(8)]
-    [RegularExpression("^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$")]
+    [MinLength(AppConstants.PasswordMinLength)]
+    [RegularExpression(AppConstants.PasswordRegularExp)]
     public required string CurrentPassword { get; set; }
 
-    [RegularExpression("^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$")]
+    [RegularExpression(AppConstants.PasswordRegularExp)]
     public string? NewPassword { get; set; }
 
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
@@ -116,7 +119,7 @@ public class EditUserDto
     [MinLength(1)]
     public string? Lastname { get; set; }
 
-    [MinLength(1)]
+    [MinLength(5)]
     [EmailAddress]
     public string? Email { get; set; }
 
@@ -174,8 +177,8 @@ public class ChangePasswordDto
     public required string Token { get; set; }
 
     [Required]
-    [MinLength(8)]
-    [RegularExpression("^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$")]
+    [MinLength(AppConstants.PasswordMinLength)]
+    [RegularExpression(AppConstants.PasswordRegularExp)]
     public required string Password { get; set; }
 }
 
@@ -208,6 +211,8 @@ public class ResultUpdateUserDto
     public string? FirstName { get; set; }
     public string? LastName { get; set; }
     public int Status { get; set; }
+
+    [EmailAddress]
     public string? Email { get; set; }
     public DateTime LastLogin { get; set; }
     public int Age { get; set; }
@@ -222,8 +227,12 @@ public class ResultUserDto
     public string? FirstName { get; set; }
     public string? LastName { get; set; }
     public int Status { get; set; }
+
+    [EmailAddress]
     public string? Email { get; set; }
     public DateTime LastLogin { get; set; }
+
+    [Range(18, 200)]
     public int Age { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
@@ -279,12 +288,18 @@ public class UpdateProfile
     [EmailAddress]
     public string? Email { get; set; }
 
+    [MinLength(AppConstants.PasswordMinLength)]
+    [RegularExpression(AppConstants.PasswordRegularExp)]
     public string? Password { get; set; }
 
+    [Range(18, 200)]
     public int? Age { get; set; }
 }
 
 public class DeleteProfile
 {
+    [Required]
+    [MinLength(AppConstants.PasswordMinLength)]
+    [RegularExpression(AppConstants.PasswordRegularExp)]
     public required string Password { get; set; }
 }
