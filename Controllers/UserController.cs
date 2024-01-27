@@ -73,11 +73,11 @@ public class UsersController : BaseApiController
     {
         try
         {
-            if (data == null) return BadRequest("Invalid Login / Password, User not found");
+            if (data == null) return BadRequest("Invalid Username / Password, User not found");
 
             AppUser? user = await _userService.AuthenticateUser(data);
 
-            if (user == null) return BadRequest("Couldn't login user. Invalid Login / Password, User not found");
+            if (user == null) return BadRequest("Couldn't login user. Invalid Username / Password, User not found");
 
             if (user.Status == (int)StatusEnum.disable) return Ok("Your account is disabled. Please Contact the admin");
 
@@ -352,36 +352,10 @@ public class UsersController : BaseApiController
         {
             string userId = _userService.GetConnectedUser(User);
 
-            AppUser? user = await _context.Users.FirstOrDefaultAsync(u => u.Id.ToString() == userId);
+            BooleanReturnDto? result = await _userService.DeleteUserAccount(data, userId);
+            if(result == null) return BadRequest("An error occured or user not found");
 
-            if (user == null) return BadRequest("An error occured");
-
-            if (!_userService.UserPasswordIsValid(user.PasswordSalt, user.PasswordHash, data.Password)) return Unauthorized("Invalid Password");
-
-            user.Status = (int)StatusEnum.delete;
-            user.Email = AppConstants.Deletedkeyword + user.Email;
-            user.UserName = AppConstants.Deletedkeyword + user.UserName;
-            user.FirstName = "";
-            user.LastName = "";
-
-            await _context.SaveChangesAsync();
-
-            // _ = _emailsCommon.SendMail(new EmailRequestDto
-            // {
-            //     ToEmail = user?.Email ?? "",
-            //     ToName = user?.FirstName ?? "",
-            //     SubTitle = "Account Deleted",
-            //     ReplyToEmail = "",
-            //     Subject = "Account Delition Confirmation",
-            //     Body = _emailsCommon.DeleteAccountBody(user),
-            //     Attachments = { }
-            // });
-
-            return Ok(new BooleanReturnDto
-            {
-                Status = true,
-                Message = "User account has been deleted"
-            });
+            return result;
         }
         catch (Exception e)
         {
