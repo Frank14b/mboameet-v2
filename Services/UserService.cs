@@ -300,7 +300,7 @@ namespace API.Services
         {
             try
             {
-                var user = await _dataContext.Users.FirstOrDefaultAsync(x => ((x.UserName == data.Login) || (x.Email == data.Login)) && x.Role != (int)RoleEnum.suadmin && x.Status != (int)StatusEnum.delete);
+                var user = await _dataContext.Users.FirstOrDefaultAsync(x => ((x.UserName == data.Username) || (x.Email == data.Username)) && x.Role != (int)RoleEnum.suadmin && x.Status != (int)StatusEnum.delete);
 
                 if (user?.PasswordSalt != null)
                 {
@@ -325,6 +325,52 @@ namespace API.Services
             catch (Exception ex)
             {
                 _logger.LogError("Authentication ${message}", ex.Message);
+                return null;
+            }
+        }
+
+        public async Task<BooleanReturnDto?> DeleteUserAccount(DeleteProfile data, string userId)
+        {
+            try
+            {
+                AppUser? user = await _dataContext.Users.FirstOrDefaultAsync(u => u.Id.ToString() == userId);
+                
+                if (user == null) return null;
+                
+                if (!UserPasswordIsValid(user.PasswordSalt, user.PasswordHash, data.Password)) {
+                    return new BooleanReturnDto {
+                        Status = false,
+                        Message = "Invalid current password",
+                    };
+                }
+
+                user.Status = (int)StatusEnum.delete;
+                user.Email = AppConstants.Deletedkeyword + user.Email;
+                user.UserName = AppConstants.Deletedkeyword + user.UserName;
+                user.FirstName = "";
+                user.LastName = "";
+                
+                await _dataContext.SaveChangesAsync();
+
+                _ = _mailService.SendEmailAsync(new EmailRequestDto
+                {
+                    ToEmail = user?.Email ?? "",
+                    ToName = user?.FirstName ?? "",
+                    SubTitle = "Account Deleted",
+                    ReplyToEmail = "",
+                    Subject = "Account Delition Confirmation",
+                    Body = _mailService.DeleteAccountBody(user),
+                    Attachments = { }
+                });
+                
+                return new BooleanReturnDto {
+                    Status = true,
+                    Message = "Your account has been deleted",
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Delete user account ${message}", ex.Message);
                 return null;
             }
         }
