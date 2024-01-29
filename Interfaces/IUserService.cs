@@ -22,4 +22,5 @@ public interface IUserService
     bool UserPasswordIsValid(byte[] passwordSalt, byte[] passwordHash, string password);
     Task<AppUser?> CreateUserAccount(RegisterDto? data);
     Task<AppUser?> AuthenticateUser(LoginDto data);
+    Task<BooleanReturnDto?> DeleteUserAccount(DeleteProfile data, string userId);
 }

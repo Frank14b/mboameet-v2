@@ -8,7 +8,7 @@ public class LoginDto
 {
     [Required]
     [MinLength(3)]
-    public required string Login { get; set; }
+    public required string Username { get; set; }
 
     [Required]
     [MinLength(AppConstants.PasswordMinLength)]
