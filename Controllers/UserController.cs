@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Mvc;
 using API.Interfaces;
 using API.Data;
 using API.DTOs;
-using API.Commons;
 using API.Entities;
 using AutoMapper;
 using System.Reactive.Linq;
@@ -18,7 +17,6 @@ public class UsersController : BaseApiController
 {
     private readonly DataContext _context;
     private readonly ITokenService _tokenService;
-    // private readonly EmailsCommon _emailsCommon;
     private readonly IMapper _mapper;
     private readonly IConfiguration _configuration;
     private readonly IUserService _userService;
@@ -33,14 +31,12 @@ public class UsersController : BaseApiController
         IUserService userService,
         ILogger<UsersController> logger,
         IMemoryCache memoryCache
-        // EmailsCommon emailsCommon
         )
     {
         _context = context;
         _tokenService = tokenService;
         _mapper = mapper;
         _configuration = configuration;
-        // _emailsCommon = emailsCommon;
         _userService = userService;
         _logger = logger;
         _memoryCache = memoryCache;
@@ -180,41 +176,16 @@ public class UsersController : BaseApiController
 
             if (user == null) return BadRequest("The provided email is not found");
 
-            // create new otp code token for user verification
-            var otpData = await _userService.CreateAuthToken(new CreateAuthTokenDto
-            {
-                Email = user.Email,
-            });
+            ResultForgetPasswordDto? result = await _userService.ForgetPassword(user);
 
-            if (otpData == null) return BadRequest("An error occured please retry later");
+            if (result == null) return BadRequest("An error occured please retry later");
 
-            //send the otp code token trough email
-            // await _emailsCommon.SendMail(new EmailRequestDto
-            // {
-            //     ToEmail = user?.Email ?? "",
-            //     ToName = user?.FirstName ?? "",
-            //     SubTitle = "Forget Password",
-            //     ReplyToEmail = "",
-            //     Subject = "Forget Password Request",
-            //     Body = _emailsCommon.UserForgetPasswordBody(new ForgetPasswordEmailDto
-            //     {
-            //         UserName = user?.UserName ?? "",
-            //         Otp = otpData.Otp,
-            //         Link = ""
-            //     }),
-            //     Attachments = { }
-            // });
-
-            return Ok(new ResultForgetPasswordDto
-            {
-                OtpToken = otpData?.Token,
-                AccessToken = _tokenService.CreateToken(user?.Id.ToString() ?? "", (int)RoleEnum.user, false),
-                Message = "An email containing an otp code has been sent to you"
-            });
+            return result;
         }
         catch (Exception e)
         {
-            return BadRequest("An error occured " + e);
+            _logger.LogError("An error occured ${message}", e.Message);
+            return BadRequest("An error occured ");
         }
     }
 
@@ -261,7 +232,7 @@ public class UsersController : BaseApiController
         try
         {
             var existingToken = await _userService.AuthTokenIsValid(null, data.Token, (int)TokenUsageTypeEnum.resetPassword);
-            if (existingToken == null) return NotFound("Invalid token");
+            if (existingToken == null) return NotFound("Invalid or expired token");
 
             existingToken.Status = (int)StatusEnum.disable;
             await _context.SaveChangesAsync();
@@ -270,29 +241,11 @@ public class UsersController : BaseApiController
 
             if (user == null) return BadRequest("An error occured or invalid token"); // check if user exist or not
 
-            PassWordGeneratedDto password = _userService.GeneratePassword(data.Password);
+            BooleanReturnDto? result = await _userService.ChangeForgetPassword(user, data);
 
-            user.PasswordHash = password.PasswordHash;
-            user.PasswordSalt = password.PasswordSalt;
-            await _context.SaveChangesAsync();
+            if (result == null) return BadRequest("An error occured please try again later");
 
-
-            // _ = _emailsCommon.SendMail(new EmailRequestDto
-            // {
-            //     ToEmail = user?.Email ?? "",
-            //     ToName = user?.FirstName ?? "",
-            //     SubTitle = "Password Change",
-            //     ReplyToEmail = "",
-            //     Subject = "Password Change Confirmation",
-            //     Body = _emailsCommon.ChangePasswordBody(user),
-            //     Attachments = { }
-            // });
-
-            return Ok(new BooleanReturnDto
-            {
-                Status = true,
-                Message = "Password has been changed successfully",
-            });
+            return result;
         }
         catch (Exception e)
         {
@@ -353,7 +306,7 @@ public class UsersController : BaseApiController
             string userId = _userService.GetConnectedUser(User);
 
             BooleanReturnDto? result = await _userService.DeleteUserAccount(data, userId);
-            if(result == null) return BadRequest("An error occured or user not found");
+            if (result == null) return BadRequest("An error occured or user not found");
 
             return result;
         }

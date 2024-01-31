@@ -16,16 +16,19 @@ namespace API.Services
         private readonly DataContext _dataContext;
         private readonly IMailService _mailService;
         private readonly ILogger<UserService> _logger;
+        private readonly ITokenService _tokenService;
 
         public UserService(
             DataContext dataContext,
             IMailService mailService,
-            ILogger<UserService> logger
+            ILogger<UserService> logger,
+            ITokenService tokenService
         )
         {
             _dataContext = dataContext;
             _mailService = mailService;
             _logger = logger;
+            _tokenService = tokenService;
         }
 
         public string GetConnectedUser(ClaimsPrincipal User)
@@ -66,7 +69,7 @@ namespace API.Services
         {
             try
             {
-                var query = _dataContext.Users.Where(u => u.Status == (int)StatusEnum.enable && (u.Email == data.Email || u.UserName == data.Username));
+                var query = _dataContext.Users.Where(u => u.Status != (int)StatusEnum.delete && (u.Email == data.Email || u.UserName == data.Username));
                 var user = await query.FirstOrDefaultAsync();
 
                 if (user == null) return true;
@@ -150,7 +153,7 @@ namespace API.Services
 
         public async Task<AppUser?> GetUserByEmail(string email)
         {
-            return await _dataContext.Users.FirstOrDefaultAsync((x) => x.Email != null && x.Email.ToLower() == email.ToLower());
+            return await _dataContext.Users.FirstOrDefaultAsync((x) => x.Email != null && x.Email.ToLower() == email.ToLower() && x.Status == (int)StatusEnum.enable);
         }
 
         public PassWordGeneratedDto GeneratePassword(string password)
@@ -334,11 +337,14 @@ namespace API.Services
             try
             {
                 AppUser? user = await _dataContext.Users.FirstOrDefaultAsync(u => u.Id.ToString() == userId);
-                
+
                 if (user == null) return null;
-                
-                if (!UserPasswordIsValid(user.PasswordSalt, user.PasswordHash, data.Password)) {
-                    return new BooleanReturnDto {
+
+                //check if provided password is valid
+                if (!UserPasswordIsValid(user.PasswordSalt, user.PasswordHash, data.Password))
+                {
+                    return new BooleanReturnDto
+                    {
                         Status = false,
                         Message = "Invalid current password",
                     };
@@ -349,9 +355,10 @@ namespace API.Services
                 user.UserName = AppConstants.Deletedkeyword + user.UserName;
                 user.FirstName = "";
                 user.LastName = "";
-                
+
                 await _dataContext.SaveChangesAsync();
 
+                //send confirmation email to notifiy the user about the deleting request
                 _ = _mailService.SendEmailAsync(new EmailRequestDto
                 {
                     ToEmail = user?.Email ?? "",
@@ -362,8 +369,9 @@ namespace API.Services
                     Body = _mailService.DeleteAccountBody(user),
                     Attachments = { }
                 });
-                
-                return new BooleanReturnDto {
+
+                return new BooleanReturnDto
+                {
                     Status = true,
                     Message = "Your account has been deleted",
                 };
@@ -371,6 +379,84 @@ namespace API.Services
             catch (Exception ex)
             {
                 _logger.LogError("Delete user account ${message}", ex.Message);
+                return null;
+            }
+        }
+
+        public async Task<ResultForgetPasswordDto?> ForgetPassword(AppUser user)
+        {
+            try
+            {
+                // create new otp code token for user verification
+                var otpData = await CreateAuthToken(new CreateAuthTokenDto
+                {
+                    Email = user.Email,
+                });
+
+                if (otpData == null) return null;
+
+                // send the otp code token trough email
+                await _mailService.SendEmailAsync(new EmailRequestDto
+                {
+                    ToEmail = user?.Email ?? "",
+                    ToName = user?.FirstName ?? "",
+                    SubTitle = "Forget Password",
+                    ReplyToEmail = "",
+                    Subject = "Forget Password Request",
+                    Body = _mailService.UserForgetPasswordBody(new ForgetPasswordEmailDto
+                    {
+                        UserName = user?.UserName ?? "",
+                        Otp = otpData.Otp,
+                        Link = ""
+                    }),
+                    Attachments = { }
+                });
+
+                return new ResultForgetPasswordDto
+                {
+                    OtpToken = otpData?.Token,
+                    AccessToken = _tokenService.CreateToken(user?.Id.ToString() ?? "", (int)RoleEnum.user, false),
+                    Message = "An email containing an otp code has been sent to you"
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Error during forgot password ${message}", ex.Message);
+                return null;
+            }
+        }
+
+        public async Task<BooleanReturnDto?> ChangeForgetPassword(AppUser user, ChangePasswordDto data)
+        {
+            try
+            {
+                PassWordGeneratedDto password = GeneratePassword(data.Password);
+
+                user.PasswordHash = password.PasswordHash;
+                user.PasswordSalt = password.PasswordSalt;
+                await _dataContext.SaveChangesAsync();
+
+                // send change password confirmation email to the user
+                _ = _mailService.SendEmailAsync(new EmailRequestDto
+                {
+                    ToEmail = user?.Email ?? "",
+                    ToName = user?.FirstName ?? "",
+                    SubTitle = "Password Change",
+                    ReplyToEmail = "",
+                    Subject = "Password Change Confirmation",
+                    Body = _mailService.ChangePasswordBody(user),
+                    Attachments = { }
+                });
+
+                return new BooleanReturnDto
+                {
+                    Status = true,
+                    Message = "Password has been changed successfully",
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Error during forgot password ${message}", ex.Message);
                 return null;
             }
         }
