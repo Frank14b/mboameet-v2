@@ -22,8 +22,6 @@ public class RegisterDto
     [MinLength(3)]
     public required string Username { get; set; }
 
-    [Required]
-    [MinLength(3)]
     public string? Firstname { get; set; }
 
     public string? Lastname { get; set; }
