@@ -73,20 +73,20 @@ public class UsersController : BaseApiController
 
             AppUser? user = await _userService.AuthenticateUser(data);
 
-            if (user == null) return BadRequest("Couldn't login user. Invalid Username / Password, User not found");
+            if (user == null) return BadRequest("Invalid Username / Password, User not found");
 
             if (user.Status == (int)StatusEnum.disable) return Ok("Your account is disabled. Please Contact the admin");
 
             // create user auth token
             var result = _mapper.Map<ResultloginDto>(user);
-            result.Token = _tokenService.CreateToken(result?.Id.ToString() ?? "", user?.Role ?? 0, true);
+            result.Token = _tokenService.CreateToken(result?.Id ?? "", user?.Role ?? 0, true);
 
             return Ok(result);
         }
         catch (Exception e)
         {
             _logger.LogError("An error occured during login ${message}", e.Message);
-            return BadRequest("An error occured or user not found");
+            return BadRequest("An error occured or user not found" + e);
         }
     }
 

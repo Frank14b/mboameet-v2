@@ -108,7 +108,7 @@ namespace API.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError("CreateAuthToken ${message}", ex.Message);
+                _logger.LogError("CreateAuthToken ${message}", ex);
                 return null;
             }
         }
@@ -391,6 +391,8 @@ namespace API.Services
                 var otpData = await CreateAuthToken(new CreateAuthTokenDto
                 {
                     Email = user.Email,
+                    UserId = user.Id,
+                    UsageType = (int)TokenUsageTypeEnum.forgetPassword,
                 });
 
                 if (otpData == null) return null;
@@ -415,7 +417,7 @@ namespace API.Services
                 return new ResultForgetPasswordDto
                 {
                     OtpToken = otpData?.Token,
-                    AccessToken = _tokenService.CreateToken(user?.Id.ToString() ?? "", (int)RoleEnum.user, false),
+                    AccessToken = _tokenService.CreateToken(user?.Id.ToString() ?? "", (int)RoleEnum.user, true),
                     Message = "An email containing an otp code has been sent to you"
                 };
             }
