@@ -25,4 +25,5 @@ public interface IUserService
     Task<BooleanReturnDto?> DeleteUserAccount(DeleteProfile data, string userId);
     Task<ResultForgetPasswordDto?> ForgetPassword(AppUser user);
     Task<BooleanReturnDto?> ChangeForgetPassword(AppUser user, ChangePasswordDto data);
+    string? GetUserIpAddress(HttpContext httpContext);
 }

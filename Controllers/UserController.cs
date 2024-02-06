@@ -22,6 +22,7 @@ public class UsersController : BaseApiController
     private readonly IUserService _userService;
     public readonly ILogger _logger;
     private readonly IMemoryCache _memoryCache;
+    // private readonly HttpContext _httpContext;
 
     public UsersController(
         DataContext context,
@@ -30,8 +31,7 @@ public class UsersController : BaseApiController
         IConfiguration configuration,
         IUserService userService,
         ILogger<UsersController> logger,
-        IMemoryCache memoryCache
-        )
+        IMemoryCache memoryCache)
     {
         _context = context;
         _tokenService = tokenService;
@@ -40,6 +40,7 @@ public class UsersController : BaseApiController
         _userService = userService;
         _logger = logger;
         _memoryCache = memoryCache;
+        // _httpContext = httpContext;
     }
 
     [AllowAnonymous]
@@ -72,6 +73,8 @@ public class UsersController : BaseApiController
             if (data == null) return BadRequest("Invalid Username / Password, User not found");
 
             AppUser? user = await _userService.AuthenticateUser(data);
+
+            string? ip = _userService.GetUserIpAddress(HttpContext); // get user ip address from http
 
             if (user == null) return BadRequest("Invalid Username / Password, User not found");
 
@@ -301,19 +304,11 @@ public class UsersController : BaseApiController
     [HttpDelete("")]
     public async Task<ActionResult<BooleanReturnDto>> DeleteAccount(DeleteProfile data)
     {
-        try
-        {
-            string userId = _userService.GetConnectedUser(User);
+        string userId = _userService.GetConnectedUser(User);
 
-            BooleanReturnDto? result = await _userService.DeleteUserAccount(data, userId);
-            if (result == null) return BadRequest("An error occured or user not found");
+        BooleanReturnDto? result = await _userService.DeleteUserAccount(data, userId);
+        if (result == null) return BadRequest("An error occured or user not found");
 
-            return result;
-        }
-        catch (Exception e)
-        {
-            _logger.LogError("An error occured while deleting account ${message}", e.Message);
-            return BadRequest("An error occured ");
-        }
+        return result;
     }
 }

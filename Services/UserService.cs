@@ -1,4 +1,3 @@
-using System;
 using System.Security.Claims;
 using API.Data;
 using API.DTOs;
@@ -8,459 +7,470 @@ using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
+using RazorEngineCore;
 
-namespace API.Services
+namespace API.Services;
+
+public class UserService : IUserService
 {
-    public class UserService : IUserService
+    private readonly DataContext _dataContext;
+    private readonly IMailService _mailService;
+    private readonly ILogger<UserService> _logger;
+    private readonly ITokenService _tokenService;
+    // private readonly HttpContext _httpContext;
+
+    public UserService(
+        DataContext dataContext,
+        IMailService mailService,
+        ILogger<UserService> logger,
+        ITokenService tokenService
+    // HttpContext httpContext
+    )
     {
-        private readonly DataContext _dataContext;
-        private readonly IMailService _mailService;
-        private readonly ILogger<UserService> _logger;
-        private readonly ITokenService _tokenService;
+        _dataContext = dataContext;
+        _mailService = mailService;
+        _logger = logger;
+        _tokenService = tokenService;
+        // _httpContext = httpContext;
+    }
 
-        public UserService(
-            DataContext dataContext,
-            IMailService mailService,
-            ILogger<UserService> logger,
-            ITokenService tokenService
-        )
+    public string GetConnectedUser(ClaimsPrincipal User)
+    {
+        try
         {
-            _dataContext = dataContext;
-            _mailService = mailService;
-            _logger = logger;
-            _tokenService = tokenService;
+            ClaimsPrincipal currentUser = User;
+            var userId = currentUser.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "";
+
+            return userId;
         }
-
-        public string GetConnectedUser(ClaimsPrincipal User)
+        catch (Exception ex)
         {
-            try
-            {
-                ClaimsPrincipal currentUser = User;
-                var userId = currentUser.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "";
-
-                return userId;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError("GetConnectedUser ${message}", ex.Message);
-                throw;
-            }
+            _logger.LogError("GetConnectedUser ${message}", ex.Message);
+            throw;
         }
+    }
 
-        public bool IsUserConnected(ClaimsPrincipal User)
+    public bool IsUserConnected(ClaimsPrincipal User)
+    {
+        try
         {
-            try
-            {
-                ClaimsPrincipal currentUser = User;
-                var userId = currentUser.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            ClaimsPrincipal currentUser = User;
+            var userId = currentUser.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-                if (userId == null) return false;
-
-                return true;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError("IsUserConnected ${message}", ex.Message);
-                throw;
-            }
-        }
-
-        public async Task<bool> IsUserAlreadyExist(CreateUserDto data)
-        {
-            try
-            {
-                var query = _dataContext.Users.Where(u => u.Status != (int)StatusEnum.delete && (u.Email == data.Email || u.UserName == data.Username));
-                var user = await query.FirstOrDefaultAsync();
-
-                if (user == null) return true;
-
-                return false;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError("IsUserAlreadyExist ${message}", ex.Message);
-                throw;
-            }
-        }
-
-        public async Task<AppAuthToken?> CreateAuthToken(CreateAuthTokenDto data)
-        {
-            try
-            {
-                if (data?.UserId == null && data?.Email == null) return null;
-
-                string otp = await GenerateAuthToken();
-                string token = Guid.NewGuid().ToString();
-
-                var authToken = new AppAuthToken
-                {
-                    Otp = int.Parse(otp),
-                    Token = token,
-                    Email = data?.Email ?? "",
-                    UserId = data?.UserId,
-                    UsageType = data?.UsageType ?? 0
-                };
-
-                await _dataContext.AuthTokens.AddAsync(authToken);  // Add to database directly
-                await _dataContext.SaveChangesAsync();
-
-                return authToken;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError("CreateAuthToken ${message}", ex);
-                return null;
-            }
-        }
-
-        public async Task<AppAuthToken?> AuthTokenIsValid(int? otp, string token, int type, int status = (int)StatusEnum.enable)
-        {
-            try
-            {
-                AppAuthToken? existingToken = null;
-
-                if (otp != null)
-                {
-                    existingToken = await _dataContext.AuthTokens.FirstOrDefaultAsync(t => t.Token == token && t.Otp == otp && t.UsageType == type && t.Status == status && t.ExpireAt > DateTime.UtcNow);
-                }
-                else
-                {
-                    existingToken = await _dataContext.AuthTokens.FirstOrDefaultAsync(t => t.Token == token && t.UsageType == type && t.Status == status && t.ExpireAt > DateTime.UtcNow);
-                }
-
-                return existingToken;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError("AuthTokenIsValid ${message}", ex.Message);
-                return null;
-            }
-        }
-
-        private async Task<string> GenerateAuthToken()
-        {
-            string otpCode = string.Concat("", Enumerable.Range(0, 9).Select(_ => RandomNumberGenerator.GetBytes(1)[0]));
-
-            var existingToken = await _dataContext.AuthTokens.FirstOrDefaultAsync(a => a.Otp == int.Parse(otpCode));
-
-            if (existingToken != null)
-            {
-                otpCode = await GenerateAuthToken();
-            }
-
-            return otpCode;
-        }
-
-        public async Task<AppUser?> GetUserByEmail(string email)
-        {
-            return await _dataContext.Users.FirstOrDefaultAsync((x) => x.Email != null && x.Email.ToLower() == email.ToLower() && x.Status == (int)StatusEnum.enable);
-        }
-
-        public PassWordGeneratedDto GeneratePassword(string password)
-        {
-            // encrypt password and return the hashed value and the salt
-            using var hmac = new HMACSHA512();
-
-            byte[] PasswordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(password));
-            byte[] PasswordSalt = hmac.Key;
-
-            return new()
-            {
-                PasswordHash = PasswordHash,
-                PasswordSalt = PasswordSalt
-            };
-        }
-
-        public async Task<bool> UserIdExist(string id)
-        {
-            var result = await _dataContext.Users.AnyAsync(x => x.Status == (int)StatusEnum.enable && x.Id.ToString() == id);
-            return result;
-        }
-
-        public async Task<bool> UserNameExist(string username, string? userId)
-        {
-            if (userId != null)
-            {
-                return await _dataContext.Users.AnyAsync(x => x.UserName.ToLower() == username.ToLower() && x.Id.ToString() != userId);
-            }
-
-            return await _dataContext.Users.AnyAsync(x => x.UserName.ToLower() == username.ToLower());
-        }
-
-        public async Task<bool> UserEmailExist(string useremail, string? userId)
-        {
-            if (userId != null)
-            {
-                return await _dataContext.Users.AnyAsync((x) => x.Email != null && x.Email.ToLower() == useremail.ToLower() && x.Id.ToString() != userId);
-            }
-
-            return await _dataContext.Users.AnyAsync((x) => x.Email != null && x.Email.ToLower() == useremail.ToLower());
-        }
-
-        public async Task<AppUser?> GetUserById(string id)
-        {
-            try
-            {
-                var result = await _dataContext.Users.Where(x => x.Status == (int)StatusEnum.enable && x.Id.ToString() == id).FirstAsync();
-                return result;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError("Error GetUserById ${message}", ex);
-                return null;
-            }
-        }
-
-        public bool IsValidPassword(string password)
-        {
-            // Validate strong password
-            Regex validateGuidRegex = new("^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$");
-            var test = validateGuidRegex.IsMatch(password);
-            return test;
-        }
-
-        public bool UserPasswordIsValid(byte[] passwordSalt, byte[] passwordHash, string password)
-        {
-            using var hmac = new HMACSHA512(passwordSalt);
-            var computedHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(password));
-
-            for (int i = 0; i < computedHash.Length; i++)
-            {
-                if (computedHash[i] != passwordHash[i]) return false;
-            }
+            if (userId == null) return false;
 
             return true;
         }
-
-        public async Task<bool> CheckGoogleAuthToken(string token = "", string urlHost = "")
+        catch (Exception ex)
         {
-            try
+            _logger.LogError("IsUserConnected ${message}", ex.Message);
+            throw;
+        }
+    }
+
+    public async Task<bool> IsUserAlreadyExist(CreateUserDto data)
+    {
+        try
+        {
+            var query = _dataContext.Users.Where(u => u.Status != (int)StatusEnum.delete && (u.Email == data.Email || u.UserName == data.Username));
+            var user = await query.FirstOrDefaultAsync();
+
+            if (user == null) return true;
+
+            return false;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError("IsUserAlreadyExist ${message}", ex.Message);
+            throw;
+        }
+    }
+
+    public async Task<AppAuthToken?> CreateAuthToken(CreateAuthTokenDto data)
+    {
+        try
+        {
+            if (data?.UserId == null && data?.Email == null) return null;
+
+            string otp = await GenerateAuthToken();
+            string token = Guid.NewGuid().ToString();
+
+            var authToken = new AppAuthToken
             {
-                string url = urlHost + "/tokeninfo?id_token=" + token;
+                Otp = int.Parse(otp),
+                Token = token,
+                Email = data?.Email ?? "",
+                UserId = data?.UserId,
+                UsageType = data?.UsageType ?? 0
+            };
 
-                var client = new HttpClient();
-                var result = await client.GetAsync(url);
+            await _dataContext.AuthTokens.AddAsync(authToken);  // Add to database directly
+            await _dataContext.SaveChangesAsync();
 
-                if (result.IsSuccessStatusCode)
-                {
-                    return true;
-                }
-                else
-                {
-                    return false;
-                }
+            return authToken;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError("CreateAuthToken ${message}", ex);
+            return null;
+        }
+    }
+
+    public async Task<AppAuthToken?> AuthTokenIsValid(int? otp, string token, int type, int status = (int)StatusEnum.enable)
+    {
+        try
+        {
+            AppAuthToken? existingToken = null;
+
+            if (otp != null)
+            {
+                existingToken = await _dataContext.AuthTokens.FirstOrDefaultAsync(t => t.Token == token && t.Otp == otp && t.UsageType == type && t.Status == status && t.ExpireAt > DateTime.UtcNow);
             }
-            catch (Exception)
+            else
+            {
+                existingToken = await _dataContext.AuthTokens.FirstOrDefaultAsync(t => t.Token == token && t.UsageType == type && t.Status == status && t.ExpireAt > DateTime.UtcNow);
+            }
+
+            return existingToken;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError("AuthTokenIsValid ${message}", ex.Message);
+            return null;
+        }
+    }
+
+    private async Task<string> GenerateAuthToken()
+    {
+        string otpCode = string.Concat("", Enumerable.Range(0, 9).Select(_ => RandomNumberGenerator.GetBytes(1)[0]));
+
+        var existingToken = await _dataContext.AuthTokens.FirstOrDefaultAsync(a => a.Otp == int.Parse(otpCode));
+
+        if (existingToken != null)
+        {
+            otpCode = await GenerateAuthToken();
+        }
+
+        return otpCode;
+    }
+
+    public async Task<AppUser?> GetUserByEmail(string email)
+    {
+        return await _dataContext.Users.FirstOrDefaultAsync((x) => x.Email != null && x.Email.ToLower() == email.ToLower() && x.Status == (int)StatusEnum.enable);
+    }
+
+    public PassWordGeneratedDto GeneratePassword(string password)
+    {
+        // encrypt password and return the hashed value and the salt
+        using var hmac = new HMACSHA512();
+
+        byte[] PasswordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(password));
+        byte[] PasswordSalt = hmac.Key;
+
+        return new()
+        {
+            PasswordHash = PasswordHash,
+            PasswordSalt = PasswordSalt
+        };
+    }
+
+    public async Task<bool> UserIdExist(string id)
+    {
+        var result = await _dataContext.Users.AnyAsync(x => x.Status == (int)StatusEnum.enable && x.Id.ToString() == id);
+        return result;
+    }
+
+    public async Task<bool> UserNameExist(string username, string? userId)
+    {
+        if (userId != null)
+        {
+            return await _dataContext.Users.AnyAsync(x => x.UserName.ToLower() == username.ToLower() && x.Id.ToString() != userId);
+        }
+
+        return await _dataContext.Users.AnyAsync(x => x.UserName.ToLower() == username.ToLower());
+    }
+
+    public async Task<bool> UserEmailExist(string useremail, string? userId)
+    {
+        if (userId != null)
+        {
+            return await _dataContext.Users.AnyAsync((x) => x.Email != null && x.Email.ToLower() == useremail.ToLower() && x.Id.ToString() != userId);
+        }
+
+        return await _dataContext.Users.AnyAsync((x) => x.Email != null && x.Email.ToLower() == useremail.ToLower());
+    }
+
+    public async Task<AppUser?> GetUserById(string id)
+    {
+        try
+        {
+            var result = await _dataContext.Users.Where(x => x.Status == (int)StatusEnum.enable && x.Id.ToString() == id).FirstAsync();
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError("Error GetUserById ${message}", ex);
+            return null;
+        }
+    }
+
+    public bool IsValidPassword(string password)
+    {
+        // Validate strong password
+        Regex validateGuidRegex = new("^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$");
+        var test = validateGuidRegex.IsMatch(password);
+        return test;
+    }
+
+    public bool UserPasswordIsValid(byte[] passwordSalt, byte[] passwordHash, string password)
+    {
+        using var hmac = new HMACSHA512(passwordSalt);
+        var computedHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(password));
+
+        for (int i = 0; i < computedHash.Length; i++)
+        {
+            if (computedHash[i] != passwordHash[i]) return false;
+        }
+
+        return true;
+    }
+
+    public async Task<bool> CheckGoogleAuthToken(string token = "", string urlHost = "")
+    {
+        try
+        {
+            string url = urlHost + "/tokeninfo?id_token=" + token;
+
+            var client = new HttpClient();
+            var result = await client.GetAsync(url);
+
+            if (result.IsSuccessStatusCode)
+            {
+                return true;
+            }
+            else
             {
                 return false;
             }
         }
-
-        public async Task<AppUser?> CreateUserAccount(RegisterDto? data)
+        catch (Exception)
         {
-            try
+            return false;
+        }
+    }
+
+    public async Task<AppUser?> CreateUserAccount(RegisterDto? data)
+    {
+        try
+        {
+            PassWordGeneratedDto password = GeneratePassword(data?.Password ?? "");
+
+            var user = new AppUser
             {
-                PassWordGeneratedDto password = GeneratePassword(data?.Password ?? "");
+                UserName = data?.Username ?? "",
+                PasswordHash = password.PasswordHash,
+                PasswordSalt = password.PasswordSalt,
+                FirstName = data?.Firstname,
+                LastName = data?.Lastname,
+                Email = data?.Email,
+                Age = 18,
+                Role = (int)RoleEnum.user,
+                Status = (int)StatusEnum.enable,
+                UpdatedAt = DateTime.UtcNow,
+            };
 
-                var user = new AppUser
-                {
-                    UserName = data?.Username ?? "",
-                    PasswordHash = password.PasswordHash,
-                    PasswordSalt = password.PasswordSalt,
-                    FirstName = data?.Firstname,
-                    LastName = data?.Lastname,
-                    Email = data?.Email,
-                    Age = 18,
-                    Role = (int)RoleEnum.user,
-                    Status = (int)StatusEnum.enable,
-                    UpdatedAt = DateTime.UtcNow,
-                };
+            await _dataContext.Users.AddAsync(user);
+            await _dataContext.SaveChangesAsync();
 
-                await _dataContext.Users.AddAsync(user);
-                await _dataContext.SaveChangesAsync();
+            _ = _mailService.SendEmailAsync(new EmailRequestDto
+            {
+                ToEmail = user?.Email ?? "",
+                ToName = user?.FirstName ?? "",
+                SubTitle = "User Registration",
+                ReplyToEmail = "",
+                Subject = "User Registration",
+                Body = _mailService.UserRegisterBody(user),
+                Attachments = { }
+            });
+
+            return user;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError("CreateUserAccount ${message}", ex.Message);
+            return null;
+        }
+    }
+
+    public async Task<AppUser?> AuthenticateUser(LoginDto data)
+    {
+        try
+        {
+            var user = await _dataContext.Users.FirstOrDefaultAsync(x => ((x.UserName == data.Username) || (x.Email == data.Username)) && x.Role != (int)RoleEnum.suadmin && x.Status != (int)StatusEnum.delete);
+
+            if (user?.PasswordSalt != null)
+            {
+                if (!UserPasswordIsValid(user.PasswordSalt, user.PasswordHash, data.Password)) return null;
 
                 _ = _mailService.SendEmailAsync(new EmailRequestDto
                 {
                     ToEmail = user?.Email ?? "",
                     ToName = user?.FirstName ?? "",
-                    SubTitle = "User Registration",
+                    SubTitle = "Login Attempts",
                     ReplyToEmail = "",
-                    Subject = "User Registration",
-                    Body = _mailService.UserRegisterBody(user),
+                    Subject = "Login Attempts",
+                    Body = _mailService.UserLoginBody(user),
                     Attachments = { }
                 });
+
+                // string? ip = GetUserIpAddressDetails();
 
                 return user;
             }
-            catch (Exception ex)
-            {
-                _logger.LogError("CreateUserAccount ${message}", ex.Message);
-                return null;
-            }
+
+            return null;
         }
-
-        public async Task<AppUser?> AuthenticateUser(LoginDto data)
+        catch (Exception ex)
         {
-            try
-            {
-                var user = await _dataContext.Users.FirstOrDefaultAsync(x => ((x.UserName == data.Username) || (x.Email == data.Username)) && x.Role != (int)RoleEnum.suadmin && x.Status != (int)StatusEnum.delete);
-
-                if (user?.PasswordSalt != null)
-                {
-                    if (!UserPasswordIsValid(user.PasswordSalt, user.PasswordHash, data.Password)) return null;
-
-                    _ = _mailService.SendEmailAsync(new EmailRequestDto
-                    {
-                        ToEmail = user?.Email ?? "",
-                        ToName = user?.FirstName ?? "",
-                        SubTitle = "Login Attempts",
-                        ReplyToEmail = "",
-                        Subject = "Login Attempts",
-                        Body = _mailService.UserLoginBody(user),
-                        Attachments = { }
-                    });
-
-                    return user;
-                }
-
-                return null;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError("Authentication ${message}", ex.Message);
-                return null;
-            }
+            _logger.LogError("Authentication ${message}", ex.Message);
+            return null;
         }
+    }
 
-        public async Task<BooleanReturnDto?> DeleteUserAccount(DeleteProfile data, string userId)
+    public async Task<BooleanReturnDto?> DeleteUserAccount(DeleteProfile data, string userId)
+    {
+        try
         {
-            try
+            AppUser? user = await _dataContext.Users.FirstOrDefaultAsync(u => u.Id.ToString() == userId);
+
+            if (user == null) return null;
+
+            //check if provided password is valid
+            if (!UserPasswordIsValid(user.PasswordSalt, user.PasswordHash, data.Password))
             {
-                AppUser? user = await _dataContext.Users.FirstOrDefaultAsync(u => u.Id.ToString() == userId);
-
-                if (user == null) return null;
-
-                //check if provided password is valid
-                if (!UserPasswordIsValid(user.PasswordSalt, user.PasswordHash, data.Password))
-                {
-                    return new BooleanReturnDto
-                    {
-                        Status = false,
-                        Message = "Invalid current password",
-                    };
-                }
-
-                user.Status = (int)StatusEnum.delete;
-                user.Email = AppConstants.Deletedkeyword + user.Email;
-                user.UserName = AppConstants.Deletedkeyword + user.UserName;
-                user.FirstName = "";
-                user.LastName = "";
-
-                await _dataContext.SaveChangesAsync();
-
-                //send confirmation email to notifiy the user about the deleting request
-                _ = _mailService.SendEmailAsync(new EmailRequestDto
-                {
-                    ToEmail = user?.Email ?? "",
-                    ToName = user?.FirstName ?? "",
-                    SubTitle = "Account Deleted",
-                    ReplyToEmail = "",
-                    Subject = "Account Delition Confirmation",
-                    Body = _mailService.DeleteAccountBody(user),
-                    Attachments = { }
-                });
-
                 return new BooleanReturnDto
                 {
-                    Status = true,
-                    Message = "Your account has been deleted",
+                    Status = false,
+                    Message = "Invalid current password",
                 };
             }
-            catch (Exception ex)
-            {
-                _logger.LogError("Delete user account ${message}", ex.Message);
-                return null;
-            }
-        }
 
-        public async Task<ResultForgetPasswordDto?> ForgetPassword(AppUser user)
+            user.Status = (int)StatusEnum.delete;
+            user.Email = AppConstants.Deletedkeyword + user.Email;
+            user.UserName = AppConstants.Deletedkeyword + user.UserName;
+            user.FirstName = "";
+            user.LastName = "";
+
+            await _dataContext.SaveChangesAsync();
+
+            //send confirmation email to notifiy the user about the deleting request
+            _ = _mailService.SendEmailAsync(new EmailRequestDto
+            {
+                ToEmail = user?.Email ?? "",
+                ToName = user?.FirstName ?? "",
+                SubTitle = "Account Deleted",
+                ReplyToEmail = "",
+                Subject = "Account Delition Confirmation",
+                Body = _mailService.DeleteAccountBody(user),
+                Attachments = { }
+            });
+
+            return new BooleanReturnDto
+            {
+                Status = true,
+                Message = "Your account has been deleted",
+            };
+        }
+        catch (Exception ex)
         {
-            try
-            {
-                // create new otp code token for user verification
-                var otpData = await CreateAuthToken(new CreateAuthTokenDto
-                {
-                    Email = user.Email,
-                    UserId = user.Id,
-                    UsageType = (int)TokenUsageTypeEnum.forgetPassword,
-                });
-
-                if (otpData == null) return null;
-
-                // send the otp code token trough email
-                await _mailService.SendEmailAsync(new EmailRequestDto
-                {
-                    ToEmail = user?.Email ?? "",
-                    ToName = user?.FirstName ?? "",
-                    SubTitle = "Forget Password",
-                    ReplyToEmail = "",
-                    Subject = "Forget Password Request",
-                    Body = _mailService.UserForgetPasswordBody(new ForgetPasswordEmailDto
-                    {
-                        UserName = user?.UserName ?? "",
-                        Otp = otpData.Otp,
-                        Link = ""
-                    }),
-                    Attachments = { }
-                });
-
-                return new ResultForgetPasswordDto
-                {
-                    OtpToken = otpData?.Token,
-                    AccessToken = _tokenService.CreateToken(user?.Id.ToString() ?? "", (int)RoleEnum.user, true),
-                    Message = "An email containing an otp code has been sent to you"
-                };
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError("Error during forgot password ${message}", ex.Message);
-                return null;
-            }
+            _logger.LogError("Delete user account ${message}", ex.Message);
+            return null;
         }
+    }
 
-        public async Task<BooleanReturnDto?> ChangeForgetPassword(AppUser user, ChangePasswordDto data)
+    public async Task<ResultForgetPasswordDto?> ForgetPassword(AppUser user)
+    {
+        try
         {
-            try
+            // create new otp code token for user verification
+            var otpData = await CreateAuthToken(new CreateAuthTokenDto
             {
-                PassWordGeneratedDto password = GeneratePassword(data.Password);
+                Email = user.Email,
+                UserId = user.Id,
+                UsageType = (int)TokenUsageTypeEnum.forgetPassword,
+            });
 
-                user.PasswordHash = password.PasswordHash;
-                user.PasswordSalt = password.PasswordSalt;
-                await _dataContext.SaveChangesAsync();
+            if (otpData == null) return null;
 
-                // send change password confirmation email to the user
-                _ = _mailService.SendEmailAsync(new EmailRequestDto
-                {
-                    ToEmail = user?.Email ?? "",
-                    ToName = user?.FirstName ?? "",
-                    SubTitle = "Password Change",
-                    ReplyToEmail = "",
-                    Subject = "Password Change Confirmation",
-                    Body = _mailService.ChangePasswordBody(user),
-                    Attachments = { }
-                });
-
-                return new BooleanReturnDto
-                {
-                    Status = true,
-                    Message = "Password has been changed successfully",
-                };
-            }
-            catch (Exception ex)
+            // send the otp code token trough email
+            await _mailService.SendEmailAsync(new EmailRequestDto
             {
-                _logger.LogError("Error during forgot password ${message}", ex.Message);
-                return null;
-            }
+                ToEmail = user?.Email ?? "",
+                ToName = user?.FirstName ?? "",
+                SubTitle = "Forget Password",
+                ReplyToEmail = "",
+                Subject = "Forget Password Request",
+                Body = _mailService.UserForgetPasswordBody(new ForgetPasswordEmailDto
+                {
+                    UserName = user?.UserName ?? "",
+                    Otp = otpData.Otp,
+                    Link = ""
+                }),
+                Attachments = { }
+            });
+
+            return new ResultForgetPasswordDto
+            {
+                OtpToken = otpData?.Token,
+                AccessToken = _tokenService.CreateToken(user?.Id.ToString() ?? "", (int)RoleEnum.user, true),
+                Message = "An email containing an otp code has been sent to you"
+            };
         }
+        catch (Exception ex)
+        {
+            _logger.LogError("Error during forgot password ${message}", ex.Message);
+            return null;
+        }
+    }
+
+    public async Task<BooleanReturnDto?> ChangeForgetPassword(AppUser user, ChangePasswordDto data)
+    {
+        try
+        {
+            PassWordGeneratedDto password = GeneratePassword(data.Password);
+
+            user.PasswordHash = password.PasswordHash;
+            user.PasswordSalt = password.PasswordSalt;
+            await _dataContext.SaveChangesAsync();
+
+            // send change password confirmation email to the user
+            _ = _mailService.SendEmailAsync(new EmailRequestDto
+            {
+                ToEmail = user?.Email ?? "",
+                ToName = user?.FirstName ?? "",
+                SubTitle = "Password Change",
+                ReplyToEmail = "",
+                Subject = "Password Change Confirmation",
+                Body = _mailService.ChangePasswordBody(user),
+                Attachments = { }
+            });
+
+            return new BooleanReturnDto
+            {
+                Status = true,
+                Message = "Password has been changed successfully",
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError("Error during forgot password ${message}", ex.Message);
+            return null;
+        }
+    }
+
+    public string? GetUserIpAddress(HttpContext httpContext)
+    {
+        var userIpAddress = httpContext.Connection.RemoteIpAddress;
+        return userIpAddress?.ToString();
     }
 }

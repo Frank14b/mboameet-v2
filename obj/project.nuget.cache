@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "GbZDTsdii8K2Xc/xCGj+zNC5PRuUfarmQtOAZ5VObva69XngcQfNOd7ON51KvJRYT3VcwVrFxK4XD5MOYJC57A==",
+  "dgSpecHash": "nR3uY6CHBNi5pVz58nnflpLsAJYlKZx54jHDD73DywdVBN4RG6rFiqFwFa5ZHGnaTPj93ibbZhMqJABMVLIC3Q==",
   "success": true,
   "projectFilePath": "E:\\training\\mboameet\\mboameet.csproj",
   "expectedPackageFiles": [
@@ -20,6 +20,8 @@
     "C:\\Users\\frank.fontcha\\.nuget\\packages\\humanizer.core\\2.14.1\\humanizer.core.2.14.1.nupkg.sha512",
     "C:\\Users\\frank.fontcha\\.nuget\\packages\\mailkit\\4.3.0\\mailkit.4.3.0.nupkg.sha512",
     "C:\\Users\\frank.fontcha\\.nuget\\packages\\microsoft.aspnetcore.authentication.jwtbearer\\7.0.14\\microsoft.aspnetcore.authentication.jwtbearer.7.0.14.nupkg.sha512",
+    "C:\\Users\\frank.fontcha\\.nuget\\packages\\microsoft.aspnetcore.http.abstractions\\2.2.0\\microsoft.aspnetcore.http.abstractions.2.2.0.nupkg.sha512",
+    "C:\\Users\\frank.fontcha\\.nuget\\packages\\microsoft.aspnetcore.http.features\\2.2.0\\microsoft.aspnetcore.http.features.2.2.0.nupkg.sha512",
     "C:\\Users\\frank.fontcha\\.nuget\\packages\\microsoft.aspnetcore.openapi\\7.0.14\\microsoft.aspnetcore.openapi.7.0.14.nupkg.sha512",
     "C:\\Users\\frank.fontcha\\.nuget\\packages\\microsoft.aspnetcore.razor.language\\6.0.1\\microsoft.aspnetcore.razor.language.6.0.1.nupkg.sha512",
     "C:\\Users\\frank.fontcha\\.nuget\\packages\\microsoft.codeanalysis.analyzers\\3.3.2\\microsoft.codeanalysis.analyzers.3.3.2.nupkg.sha512",

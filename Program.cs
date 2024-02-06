@@ -78,7 +78,6 @@ builder.Services.AddAuthorization(Options =>
 );
 
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
-
 builder.Services.Configure<MailSettings>(builder.Configuration.GetSection("MailSettings"));
 
 builder.Services.AddScoped<ITokenService, TokenService>();
@@ -88,7 +87,7 @@ builder.Services.AddScoped<IMatchService, MatchService>();
 builder.Services.AddScoped<IUserService, UserService>();
 
 builder.Services.AddMemoryCache();
-
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<UserSeeder>();
 
 var app = builder.Build();
