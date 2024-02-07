@@ -4456,24 +4456,25 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\frank.fontcha\\.nuget\\packages\\": {}
+    "/Users/kamgafrank/.nuget/packages/": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "E:\\training\\mboameet\\mboameet.csproj",
+      "projectUniqueName": "/Users/kamgafrank/Documents/projects/mboameet-v2/mboameet.csproj",
       "projectName": "mboameet",
-      "projectPath": "E:\\training\\mboameet\\mboameet.csproj",
-      "packagesPath": "C:\\Users\\frank.fontcha\\.nuget\\packages\\",
-      "outputPath": "E:\\training\\mboameet\\obj\\",
+      "projectPath": "/Users/kamgafrank/Documents/projects/mboameet-v2/mboameet.csproj",
+      "packagesPath": "/Users/kamgafrank/.nuget/packages/",
+      "outputPath": "/Users/kamgafrank/Documents/projects/mboameet-v2/obj/",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "C:\\Users\\frank.fontcha\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        "/Users/kamgafrank/.nuget/NuGet/NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net7.0"
       ],
       "sources": {
+        "/usr/local/share/dotnet/library-packs": {},
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
@@ -4584,7 +4585,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\7.0.405\\RuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/7.0.103/RuntimeIdentifierGraph.json"
       }
     }
   }

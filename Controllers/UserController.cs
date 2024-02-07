@@ -74,7 +74,7 @@ public class UsersController : BaseApiController
 
             AppUser? user = await _userService.AuthenticateUser(data);
 
-            string? ip = _userService.GetUserIpAddress(HttpContext); // get user ip address from http
+            // string? ip = _userService.GetUserIpAddress(HttpContext); // get user ip address from http
 
             if (user == null) return BadRequest("Invalid Username / Password, User not found");
 
