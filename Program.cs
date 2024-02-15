@@ -11,14 +11,13 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using API.AppHub;
 // using API.Middleware;
-using API.Middleware;
 using GraphQL;
 using API.Graphql.Type;
 using API.Graphql.Query;
 using API.Graphql.Schema;
 using GraphQL.Types;
 using GraphiQl;
-using API.AppHub;
+// using API.AppHub;
 // using API.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -142,11 +141,6 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-app.UseCors("AllowReactApp");
-
-//register middlewares
-// app.UseMiddleware<ExceptionMiddleware>();
-// app.UseMiddleware<RoleAccessMiddleware>();
 app.UseGraphiQl("/graphql");
 app.UseGraphQL<ISchema>();
 app.UseCors("AllowReactApp");
