@@ -11,6 +11,13 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using API.AppHub;
 // using API.Middleware;
+using API.Middleware;
+using GraphQL;
+using API.Graphql.Type;
+using API.Graphql.Query;
+using API.Graphql.Schema;
+using GraphQL.Types;
+using GraphiQl;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -103,6 +110,11 @@ builder.Services.AddScoped<IMatchService, MatchService>();
 builder.Services.AddScoped<IUserService, UserService>();
 
 builder.Services.AddSignalR();
+builder.Services.AddTransient<UserType>();
+builder.Services.AddTransient<UserQuery>();
+builder.Services.AddTransient<ISchema, UserSchema>();
+
+builder.Services.AddGraphQL(gq => gq.AddAutoSchema<ISchema>().AddSystemTextJson());
 builder.Services.AddMemoryCache();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<UserSeeder>();
@@ -132,6 +144,8 @@ app.UseCors("AllowReactApp");
 //register middlewares
 // app.UseMiddleware<ExceptionMiddleware>();
 // app.UseMiddleware<RoleAccessMiddleware>();
+app.UseGraphiQl("/graphql");
+app.UseGraphQL<ISchema>();
 
 app.UseAuthentication();
 app.UseAuthorization();

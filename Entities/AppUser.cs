@@ -1,12 +1,12 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using MongoDB.Bson.Serialization.Attributes;
 using MongoDB.Bson;
 using API.DTOs;
+using MongoDB.Bson.Serialization.Attributes;
 
 namespace API.Entities
 {
-    [Table("Users")]
+    [Table("users")]
     public class AppUser
     {
         [BsonId]
@@ -24,7 +24,7 @@ namespace API.Entities
 
         [EmailAddress]
         public string? Email { get; set; }
-
+        
         public required byte[] PasswordHash { get; set; }
 
         public required byte[] PasswordSalt { get; set; }
@@ -42,7 +42,7 @@ namespace API.Entities
 
         public DateTime UpdatedAt { get; set; }
 
-        public bool Verified { get; set; } = false;
+        public bool IsVerified { get; set; } = false;
     }
 
     public enum RoleEnum

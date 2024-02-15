@@ -6,7 +6,7 @@ using MongoDB.Bson.Serialization.Attributes;
 
 namespace API.Entities
 {
-    [Table("Matches")]
+    [Table("matches")]
     public class AppMatch
     {
         [BsonId]

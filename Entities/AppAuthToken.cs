@@ -6,7 +6,7 @@ using MongoDB.Bson.Serialization.Attributes;
 
 namespace API.Entities;
 
-[Table("AuthTokens")]
+[Table("authtokens")]
 public class AppAuthToken
 {
     [BsonId]
