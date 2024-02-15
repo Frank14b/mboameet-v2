@@ -18,6 +18,8 @@ using API.Graphql.Query;
 using API.Graphql.Schema;
 using GraphQL.Types;
 using GraphiQl;
+using API.AppHub;
+// using API.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -115,6 +117,7 @@ builder.Services.AddTransient<UserQuery>();
 builder.Services.AddTransient<ISchema, UserSchema>();
 
 builder.Services.AddGraphQL(gq => gq.AddAutoSchema<ISchema>().AddSystemTextJson());
+builder.Services.AddSignalR();
 builder.Services.AddMemoryCache();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<UserSeeder>();
@@ -146,6 +149,11 @@ app.UseCors("AllowReactApp");
 // app.UseMiddleware<RoleAccessMiddleware>();
 app.UseGraphiQl("/graphql");
 app.UseGraphQL<ISchema>();
+app.UseCors("AllowReactApp");
+
+//register middlewares
+// app.UseMiddleware<ExceptionMiddleware>();
+// app.UseMiddleware<RoleAccessMiddleware>();
 
 app.UseAuthentication();
 app.UseAuthorization();
