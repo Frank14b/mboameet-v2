@@ -6,7 +6,7 @@ using MongoDB.Bson.Serialization.Attributes;
 
 namespace API.Entities;
 
-[Table("GroupChats")]
+[Table("groupchats")]
 public class AppGroupChat
 {
     [BsonId]

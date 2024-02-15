@@ -1,4 +1,3 @@
-using System.Collections;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using API.DTOs;
@@ -7,11 +6,10 @@ using MongoDB.Bson.Serialization.Attributes;
 
 namespace API.Entities;
 
-[Table("Chats")]
+[Table("chats")]
 public class AppChat
 {
     [BsonId]
-    // [BsonRepresentation(BsonType.ObjectId)]
     public ObjectId Id { get; set; }
 
     [Required]

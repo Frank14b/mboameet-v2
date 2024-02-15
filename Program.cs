@@ -10,6 +10,12 @@ using MongoDB.Driver;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using API.Middleware;
+using GraphQL;
+using API.Graphql.Type;
+using API.Graphql.Query;
+using API.Graphql.Schema;
+using GraphQL.Types;
+using GraphiQl;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -86,6 +92,11 @@ builder.Services.AddScoped<IChatService, ChatService>();
 builder.Services.AddScoped<IMatchService, MatchService>();
 builder.Services.AddScoped<IUserService, UserService>();
 
+builder.Services.AddTransient<UserType>();
+builder.Services.AddTransient<UserQuery>();
+builder.Services.AddTransient<ISchema, UserSchema>();
+
+builder.Services.AddGraphQL(gq => gq.AddAutoSchema<ISchema>().AddSystemTextJson());
 builder.Services.AddMemoryCache();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<UserSeeder>();
@@ -113,6 +124,9 @@ if (app.Environment.IsDevelopment())
     });
     app.UseCors(x => x.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin());
 }
+
+app.UseGraphiQl("/graphql");
+app.UseGraphQL<ISchema>();
 
 app.UseAuthentication();
 app.UseAuthorization();

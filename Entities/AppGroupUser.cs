@@ -6,7 +6,7 @@ using MongoDB.Bson.Serialization.Attributes;
 
 namespace API.Entities;
 
-[Table("GroupUsers")]
+[Table("groupusers")]
 public class AppGroupUser
 {
     [BsonId]
