@@ -16,6 +16,8 @@ using API.Graphql.Query;
 using API.Graphql.Schema;
 using GraphQL.Types;
 using GraphiQl;
+using API.AppHub;
+// using API.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -45,7 +47,7 @@ builder.Services.AddSwaggerGen(c =>
         // c.OperationFilter<SwaggerAuthorizeOperationFilter>();
     });
 
-var connectionString = builder.Configuration["MONGODB_URI"];
+string? connectionString = builder.Configuration["MONGODB_URI"];
 
 if (connectionString == null)
 {
@@ -83,6 +85,21 @@ builder.Services.AddAuthorization(Options =>
     }
 );
 
+// add cors policy
+string clientUrl = builder.Configuration["ClientUrl"] ?? "";
+
+builder.Services.AddCors(Options =>
+{
+    Options.AddPolicy("AllowReactApp", builder =>
+    {
+        builder.WithOrigins(clientUrl) // Replace with your React app's URL
+               .SetIsOriginAllowed((host) => true)
+               .AllowAnyHeader()
+               .WithMethods("GET", "POST")
+               .AllowCredentials();
+    });
+});
+
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 builder.Services.Configure<MailSettings>(builder.Configuration.GetSection("MailSettings"));
 
@@ -97,6 +114,7 @@ builder.Services.AddTransient<UserQuery>();
 builder.Services.AddTransient<ISchema, UserSchema>();
 
 builder.Services.AddGraphQL(gq => gq.AddAutoSchema<ISchema>().AddSystemTextJson());
+builder.Services.AddSignalR();
 builder.Services.AddMemoryCache();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<UserSeeder>();
@@ -111,9 +129,6 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-// app.UseMiddleware<ExceptionMiddleware>();
-// app.UseMiddleware<RoleAccessMiddleware>();
-
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -122,18 +137,24 @@ if (app.Environment.IsDevelopment())
     {
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "v1.0.0");
     });
-    app.UseCors(x => x.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin());
 }
 
 app.UseGraphiQl("/graphql");
 app.UseGraphQL<ISchema>();
+app.UseCors("AllowReactApp");
+
+//register middlewares
+// app.UseMiddleware<ExceptionMiddleware>();
+// app.UseMiddleware<RoleAccessMiddleware>();
 
 app.UseAuthentication();
 app.UseAuthorization();
-
 app.UseHttpsRedirection();
+app.MapControllers();
+// register hub routes
+app.MapHub<ChatHub>("/chathub");
+app.Run();
+
 // app.UseStaticFiles();
 // app.UseRouting();
 // app.MapRazorPages();
-app.MapControllers();
-app.Run();
