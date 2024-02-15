@@ -142,7 +142,6 @@ if (app.Environment.IsDevelopment())
 app.UseGraphiQl("/graphql");
 app.UseGraphQL<ISchema>();
 app.UseCors("AllowReactApp");
-
 //register middlewares
 // app.UseMiddleware<ExceptionMiddleware>();
 // app.UseMiddleware<RoleAccessMiddleware>();
