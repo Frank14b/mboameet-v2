@@ -1,4 +1,3 @@
-using System.Security.Cryptography.X509Certificates;
 using API.DTOs;
 using API.Entities;
 using API.Graphql.Type;
@@ -22,21 +21,23 @@ public class UserQuery : ObjectGraphType
         var Id = new QueryArgument<StringGraphType> { Name = "id", Description = "User object id" };
         var Keyword = new QueryArgument<StringGraphType> { Name = "keyword", Description = "User email, name, ..." };
 
-        Field<ListGraphType<UserType>>("users").ResolveAsync( async ctx => { 
-            // List<AppUser> users = await _userService.GetUsers();
-            // var data = _mapper.Map<ResultUserDto>(users);
+        Field<ListGraphType<UserType>>("users").ResolveAsync( async ctx => {
             return await ResultUserList();
         });
 
-        Field<ListGraphType<UserType>>("user").Arguments(new QueryArguments(FindUserDto.Id, FindUserDto.Keyword))
-        .Resolve(ctx => { 
-            return _userService.GetUserById(ctx.GetArgument<string>("id")); 
-            }
-        );
+        Field<UserType>("user").Arguments(new QueryArguments(FindUserDto.Id, FindUserDto.Keyword))
+        .ResolveAsync(async ctx => { 
+            return await ResultUser(ctx.GetArgument<string>("id")); 
+        });
         
         async Task<List<ResultUserDto>> ResultUserList() {
             List<AppUser> users = await _userService.GetUsers();
             return _mapper.Map<List<ResultUserDto>>(users);
+        }
+
+        async Task<ResultUserDto> ResultUser(string id) {
+            AppUser? user = await _userService.GetUserById(id);
+            return _mapper.Map<ResultUserDto>(user);
         }
     }
 }
