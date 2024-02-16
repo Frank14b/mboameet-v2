@@ -15,8 +15,10 @@ using GraphQL;
 using API.Graphql.Type;
 using API.Graphql.Query;
 using API.Graphql.Schema;
+using API.Mutation;
 using GraphQL.Types;
 using GraphiQl;
+
 // using API.AppHub;
 // using API.Middleware;
 
@@ -114,9 +116,8 @@ builder.Services.AddSignalR();
 builder.Services.AddTransient<UserType>();
 builder.Services.AddTransient<UserQuery>();
 builder.Services.AddTransient<ISchema, UserSchema>();
-
+builder.Services.AddTransient<UserMutation>();
 builder.Services.AddGraphQL(gq => gq.AddAutoSchema<ISchema>().AddSystemTextJson());
-builder.Services.AddSignalR();
 builder.Services.AddMemoryCache();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<UserSeeder>();

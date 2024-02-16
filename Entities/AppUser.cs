@@ -24,7 +24,7 @@ namespace API.Entities
 
         [EmailAddress]
         public string? Email { get; set; }
-        
+
         public required byte[] PasswordHash { get; set; }
 
         public required byte[] PasswordSalt { get; set; }

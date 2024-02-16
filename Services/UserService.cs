@@ -214,18 +214,10 @@ public class UserService : IUserService
         }
     }
 
-    public IEnumerable<AppUser>? GetUsers()
+    public List<AppUser> GetUsers()
     {
-        try
-        {
-            var result = _dataContext.Users.Where(x => x.Status == (int)StatusEnum.enable).ToList();
-            return result;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError("Error getting users ${message}", ex);
-            return null;
-        }
+        var result = _dataContext.Users.Where(x => x.Status == (int)StatusEnum.enable).ToList();
+        return result;
     }
 
     public bool IsValidPassword(string password)
