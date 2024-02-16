@@ -214,9 +214,14 @@ public class UserService : IUserService
         }
     }
 
-    public List<AppUser> GetUsers()
+    public async Task<List<AppUser>> GetUsers()
     {
-        var result = _dataContext.Users.Where(x => x.Status == (int)StatusEnum.enable).ToList();
+        var result = await _dataContext.Users.Where(x => x.Status == (int)StatusEnum.enable).ToListAsync();
+
+        foreach(var user in result) {
+            
+        }
+
         return result;
     }
 
