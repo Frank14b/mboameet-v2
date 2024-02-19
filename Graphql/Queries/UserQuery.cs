@@ -26,7 +26,9 @@ public class UserQuery : ObjectGraphType
         Field<ListGraphType<UserType>>("users").ResolveAsync(async ctx =>
         {
 
-            if (ctx.User?.IsInRole("Admin") == false)
+            Console.WriteLine(ctx.User);
+
+            if (ctx.User == null)
             {
                 throw new UnauthorizedAccessException("User must be an admin to access user list");
             }
