@@ -7,7 +7,6 @@ using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
-using RazorEngineCore;
 
 namespace API.Services;
 
@@ -72,7 +71,7 @@ public class UserService : IUserService
     {
         try
         {
-            var query = _dataContext.Users.Where(u => u.Status != (int)StatusEnum.delete && (u.Email == data.Email || u.UserName == data.Username));
+            var query = _dataContext.Users.Where(u => u.Status != (int)StatusEnum.delete && (u.Email == data.Email || u.UserName == data.UserName));
             var user = await query.FirstOrDefaultAsync();
 
             if (user == null) return true;
@@ -218,8 +217,9 @@ public class UserService : IUserService
     {
         var result = await _dataContext.Users.Where(x => x.Status == (int)StatusEnum.enable).ToListAsync();
 
-        foreach(var user in result) {
-            
+        foreach (var user in result)
+        {
+
         }
 
         return result;
@@ -278,11 +278,11 @@ public class UserService : IUserService
 
             var user = new AppUser
             {
-                UserName = data?.Username ?? "",
+                UserName = data?.UserName ?? "",
                 PasswordHash = password.PasswordHash,
                 PasswordSalt = password.PasswordSalt,
-                FirstName = data?.Firstname,
-                LastName = data?.Lastname,
+                FirstName = data?.FirstName,
+                LastName = data?.LastName,
                 Email = data?.Email,
                 Age = 18,
                 Role = (int)RoleEnum.user,
@@ -317,7 +317,7 @@ public class UserService : IUserService
     {
         try
         {
-            var user = await _dataContext.Users.FirstOrDefaultAsync(x => ((x.UserName == data.Username) || (x.Email == data.Username)) && x.Role != (int)RoleEnum.suadmin && x.Status != (int)StatusEnum.delete);
+            var user = await _dataContext.Users.FirstOrDefaultAsync(x => ((x.UserName == data.UserName) || (x.Email == data.UserName)) && x.Role != (int)RoleEnum.suadmin && x.Status != (int)StatusEnum.delete);
 
             if (user?.PasswordSalt != null)
             {

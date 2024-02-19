@@ -47,7 +47,7 @@ public class UsersController : BaseApiController
     [HttpPost("")]
     public async Task<ActionResult<ResultloginDto>> RegisterUsers(RegisterDto data)
     {
-        if (await _userService.UserNameExist(data.Username, null)) return BadRequest("Username already in used");
+        if (await _userService.UserNameExist(data.UserName, null)) return BadRequest("Username already in used");
 
         if (await _userService.UserEmailExist(data?.Email ?? "", null)) return BadRequest("Email Address already in used");
 

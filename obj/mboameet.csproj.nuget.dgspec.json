@@ -1,26 +1,25 @@
 {
   "format": 1,
   "restore": {
-    "/Users/kamgafrank/Documents/projects/mboameet-v2/mboameet.csproj": {}
+    "E:\\training\\mboameet\\mboameet.csproj": {}
   },
   "projects": {
-    "/Users/kamgafrank/Documents/projects/mboameet-v2/mboameet.csproj": {
+    "E:\\training\\mboameet\\mboameet.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/Users/kamgafrank/Documents/projects/mboameet-v2/mboameet.csproj",
+        "projectUniqueName": "E:\\training\\mboameet\\mboameet.csproj",
         "projectName": "mboameet",
-        "projectPath": "/Users/kamgafrank/Documents/projects/mboameet-v2/mboameet.csproj",
-        "packagesPath": "/Users/kamgafrank/.nuget/packages/",
-        "outputPath": "/Users/kamgafrank/Documents/projects/mboameet-v2/obj/",
+        "projectPath": "E:\\training\\mboameet\\mboameet.csproj",
+        "packagesPath": "C:\\Users\\Frank Fontcha\\.nuget\\packages\\",
+        "outputPath": "E:\\training\\mboameet\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "/Users/kamgafrank/.nuget/NuGet/NuGet.Config"
+          "C:\\Users\\Frank Fontcha\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net7.0"
         ],
         "sources": {
-          "/usr/local/share/dotnet/library-packs": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
@@ -155,7 +154,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/7.0.103/RuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\7.0.406\\RuntimeIdentifierGraph.json"
         }
       }
     }

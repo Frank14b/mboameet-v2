@@ -10,7 +10,6 @@ namespace API.Entities
     public class AppMatch
     {
         [BsonId]
-        // [BsonRepresentation(BsonType.ObjectId)]
         public ObjectId Id { get; set; }
 
         // [BsonId]

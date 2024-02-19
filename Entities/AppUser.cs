@@ -3,10 +3,12 @@ using System.ComponentModel.DataAnnotations.Schema;
 using MongoDB.Bson;
 using API.DTOs;
 using MongoDB.Bson.Serialization.Attributes;
+using Microsoft.EntityFrameworkCore;
 
 namespace API.Entities
 {
     [Table("users")]
+    [Index(nameof(Email), nameof(UserName), IsUnique = true)]
     public class AppUser
     {
         [BsonId]
@@ -23,7 +25,7 @@ namespace API.Entities
         public int Status { get; set; }
 
         [EmailAddress]
-        public string? Email { get; set; }
+        public required string Email { get; set; }
 
         public required byte[] PasswordHash { get; set; }
 

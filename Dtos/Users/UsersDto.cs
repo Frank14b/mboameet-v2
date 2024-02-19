@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using API.Entities;
 using MongoDB.Bson;
 
 namespace API.DTOs;
@@ -8,7 +7,7 @@ public class LoginDto
 {
     [Required]
     [MinLength(3)]
-    public required string Username { get; set; }
+    public required string UserName { get; set; }
 
     [Required]
     [MinLength(AppConstants.PasswordMinLength)]
@@ -20,11 +19,11 @@ public class RegisterDto
 {
     [Required]
     [MinLength(3)]
-    public required string Username { get; set; }
+    public required string UserName { get; set; }
 
-    public string? Firstname { get; set; }
+    public string? FirstName { get; set; }
 
-    public string? Lastname { get; set; }
+    public string? LastName { get; set; }
 
     [Required]
     [EmailAddress]
@@ -40,12 +39,12 @@ public class SocialAuthDto
 {
     [Required]
     [MinLength(3)]
-    public required string Username { get; set; }
+    public required string UserName { get; set; }
 
     [Required]
     [MinLength(3)]
-    public string? Firstname { get; set; }
-    public string? Lastname { get; set; }
+    public string? FirstName { get; set; }
+    public string? LastName { get; set; }
 
     [Required]
     [EmailAddress]
@@ -81,13 +80,13 @@ public class UpdateStatusUserDto
 public class UpdateProfileDto
 {
     [MinLength(1)]
-    public required string Username { get; set; }
+    public required string UserName { get; set; }
 
     [MinLength(1)]
-    public string? Firstname { get; set; }
+    public string? FirstName { get; set; }
 
     [MinLength(1)]
-    public string? Lastname { get; set; }
+    public string? LastName { get; set; }
 
     [MinLength(1)]
     [EmailAddress]
@@ -109,13 +108,13 @@ public class EditUserDto
     public required string Id { get; set; }
 
     [MinLength(1)]
-    public required string Username { get; set; }
+    public required string UserName { get; set; }
 
     [MinLength(1)]
-    public string? Firstname { get; set; }
+    public string? FirstName { get; set; }
 
     [MinLength(1)]
-    public string? Lastname { get; set; }
+    public string? LastName { get; set; }
 
     [MinLength(5)]
     [EmailAddress]
@@ -128,13 +127,13 @@ public class CreateUserDto
 {
     [Required]
     [MinLength(3)]
-    public required string Username { get; set; }
+    public required string UserName { get; set; }
 
     [Required]
     [MinLength(3)]
-    public string? Firstname { get; set; }
+    public string? FirstName { get; set; }
 
-    public string? Lastname { get; set; }
+    public string? LastName { get; set; }
 
     [Required]
     [EmailAddress]

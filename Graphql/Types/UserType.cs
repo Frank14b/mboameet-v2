@@ -27,11 +27,12 @@ public class FindUserDto
 
 public class CreateUserType : InputObjectGraphType
 {
-    public CreateUserType() {
-        Field<IntGraphType>("id");
-        Field<StringGraphType>("username");
-        Field<StringGraphType>("firstname");
-        Field<StringGraphType>("lastname");
+    public CreateUserType()
+    {
+        Field<StringGraphType>("userName");
+        Field<StringGraphType>("firstName");
+        Field<StringGraphType>("lastName");
         Field<StringGraphType>("email");
+        Field<StringGraphType>("password");
     }
 }
