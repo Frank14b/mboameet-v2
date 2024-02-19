@@ -222,12 +222,12 @@ public class ResultUserDto
 {
     public required string Id { get; set; }
     public required string UserName { get; set; }
-    public string? FirstName { get; set; }
-    public string? LastName { get; set; }
+    public required string FirstName { get; set; } = "";
+    public string? LastName { get; set; } = "";
     public int Status { get; set; }
 
     [EmailAddress]
-    public string? Email { get; set; }
+    public string? Email { get; set; } = "";
     public DateTime LastLogin { get; set; }
 
     [Range(18, 200)]

@@ -113,12 +113,15 @@ builder.Services.AddScoped<IMatchService, MatchService>();
 builder.Services.AddScoped<IUserService, UserService>();
 
 builder.Services.AddSignalR();
+builder.Services.AddMemoryCache();
+
 builder.Services.AddTransient<UserType>();
 builder.Services.AddTransient<UserQuery>();
-builder.Services.AddTransient<ISchema, UserSchema>();
+builder.Services.AddTransient<CreateUserType>();
 builder.Services.AddTransient<UserMutation>();
+builder.Services.AddTransient<ISchema, UserSchema>();
 builder.Services.AddGraphQL(gq => gq.AddAutoSchema<ISchema>().AddSystemTextJson());
-builder.Services.AddMemoryCache();
+
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<UserSeeder>();
 
