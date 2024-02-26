@@ -18,15 +18,14 @@ using API.Graphql.Schema;
 using API.Mutation;
 using GraphQL.Types;
 using GraphiQl;
-
-// using API.AppHub;
-// using API.Middleware;
+// using NRedisStack;
+// using NRedisStack.RedisStackCommands;
+using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 // builder.Services.AddRazorPages();
-
 
 builder.Services.AddControllers().AddJsonOptions(x =>
                 x.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles);
@@ -58,13 +57,21 @@ if (connectionString == null)
     Environment.Exit(0);
 }
 
-var client = new MongoClient(connectionString);
+var client = new MongoClient(connectionString); // mongo db client initiate connection
 
 var db = client.GetDatabase("mboameet");
 
 builder.Services.AddDbContext<DataContext>(opt =>
 {
     opt.UseMongoDB(db.Client, db.DatabaseNamespace.DatabaseName);
+});
+
+// ConnectionMultiplexer redis = ConnectionMultiplexer.Connect("localhost");  // redis client initiate connection
+// IDatabase redisDb = redis.GetDatabase();
+
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+    options.Configuration = builder.Configuration.GetConnectionString("Redis");
 });
 
 builder.Services.AddAuthentication().AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, Options =>
@@ -75,6 +82,23 @@ builder.Services.AddAuthentication().AddJwtBearer(JwtBearerDefaults.Authenticati
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["TokenKey"] ?? "")),
         ValidateIssuer = false,
         ValidateAudience = false,
+    };
+
+    Options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            var accessToken = context.Request.Query["access_token"];
+
+            // If the request is for our hub...
+            var path = context.HttpContext.Request.Path;
+            if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/apphub"))
+            {
+                // Read the token out of the query string
+                context.Token = accessToken;
+            }
+            return Task.CompletedTask;
+        }
     };
 });
 
@@ -157,7 +181,7 @@ app.UseAuthorization();
 app.UseHttpsRedirection();
 app.MapControllers();
 // register hub routes
-app.MapHub<ChatHub>("/chathub");
+app.MapHub<AppHub>("/apphub");
 app.Run();
 
 // app.UseStaticFiles();

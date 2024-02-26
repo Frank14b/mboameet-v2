@@ -11,7 +11,7 @@ using MongoDB.Bson;
 namespace API.Controllers;
 
 [Authorize(Policy = "IsUser")]
-[Route("api/v1/chats")]
+[Route("api/v1/groups/chats")]
 public class GroupChatController : BaseApiController
 {
 

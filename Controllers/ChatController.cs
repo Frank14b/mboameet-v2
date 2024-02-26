@@ -3,27 +3,28 @@ using API.DTOs;
 using API.Entities;
 using API.Interfaces;
 using AutoMapper;
+using GraphQL;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using MongoDB.Bson;
 
 namespace API.Controllers
 {
-    // [Authorize(Policy = "IsUser")]
+    [Authorize(Policy = "IsUser")]
     [Route("api/v1/chats")]
     public class ChatController : BaseApiController
     {
-
-        private readonly DataContext _dataContext;
         private readonly IMapper _mapper;
         private readonly IUserService _userService;
         private readonly IMatchService _matchService;
+        private readonly IChatService _chatService;
 
-        public ChatController(DataContext context, IChatService chatService, IMatchService matchService, IMapper mapper, IUserService userService, IConfiguration configuration, IMailService mailService)
+        public ChatController(
+            IChatService chatService, 
+            IMatchService matchService, 
+            IMapper mapper, 
+            IUserService userService)
         {
-            _dataContext = context;
             _mapper = mapper;
-            // _chatService = chatService;
+            _chatService = chatService;
             _userService = userService;
             _matchService = matchService;
         }
@@ -35,18 +36,13 @@ namespace API.Controllers
             {
                 string id = _userService.GetConnectedUser(User);
 
-                if (!(await _matchService.CheckIfUserIsMatch(id, data.Receiver.ToString())).Status) return BadRequest("You must be matching with this user to send a message");
+                // if (!(await _matchService.CheckIfUserIsMatch(id, data.Receiver.ToString())).Status) return BadRequest("You must be matching with this user to send a message");
 
-                var newChat = _mapper.Map<AppChat>(data);
-                newChat.MessageType = (int)EnumMessageType.text;
-                newChat.Sender = ObjectId.Parse(id);
-
-                _dataContext.Add(newChat);
-                await _dataContext.SaveChangesAsync();
+                AppChat? newChat = await _chatService.SendMessage(data, id);
 
                 var result = _mapper.Map<MessageResultDto>(newChat);
 
-                return result;
+                return Ok(result);
             }
             catch (Exception e)
             {
@@ -61,23 +57,9 @@ namespace API.Controllers
             {
                 string id = _userService.GetConnectedUser(User);
 
-                var query = _dataContext.Chats.Where(m => m.Status == (int)StatusEnum.enable && ((m.Sender.ToString() == id && m.Receiver.ToString() == userId) || (m.Receiver.ToString() == id && m.Sender.ToString() == userId)));
+                var data = await _chatService.GetMessages(id, userId, skip, limit, sort);
 
-                int totalMessage = await query.CountAsync();
-
-                query = sort == "desc" ? query.OrderByDescending(x => x.CreatedAt) : query.OrderBy(x => x.CreatedAt);
-
-                var _result = await query.Skip(skip).Take(limit).ToListAsync();
-
-                var result = _mapper.Map<IEnumerable<MessageResultDto>>(_result);
-
-                return Ok(new ResultPaginate<MessageResultDto>
-                {
-                    Data = result,
-                    Limit = limit,
-                    Skip = skip,
-                    Total = totalMessage
-                });
+                return Ok(data);
             }
             catch (Exception e)
             {
