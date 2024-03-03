@@ -192,6 +192,7 @@ public class ResultloginDto
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
     public required string Token { get; set; }
+    public string? Photo {get; set;}
 }
 
 public class ResultDeleteUserDto
@@ -215,6 +216,7 @@ public class ResultUpdateUserDto
     public int Age { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
+    public string? Photo {get; set;}
 }
 
 public class ResultUserDto
@@ -234,6 +236,7 @@ public class ResultUserDto
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
     public List<MatchesResultDto>? Match { get; set; }
+    public string? Photo {get; set;}
 }
 
 public class ResultUsersPaginate
@@ -291,6 +294,7 @@ public class UpdateProfile
 
     [Range(18, 200)]
     public int? Age { get; set; }
+    public string? Photo {get; set;}
 }
 
 public class DeleteProfile

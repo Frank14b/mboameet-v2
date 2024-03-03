@@ -22,7 +22,7 @@ public class UsersController : BaseApiController
     private readonly IUserService _userService;
     public readonly ILogger _logger;
     private readonly IMemoryCache _memoryCache;
-    // private readonly HttpContext _httpContext;
+    private readonly IAppFileService _appFileService;
 
     public UsersController(
         DataContext context,
@@ -31,7 +31,8 @@ public class UsersController : BaseApiController
         IConfiguration configuration,
         IUserService userService,
         ILogger<UsersController> logger,
-        IMemoryCache memoryCache)
+        IMemoryCache memoryCache,
+        IAppFileService appFileService)
     {
         _context = context;
         _tokenService = tokenService;
@@ -40,7 +41,7 @@ public class UsersController : BaseApiController
         _userService = userService;
         _logger = logger;
         _memoryCache = memoryCache;
-        // _httpContext = httpContext;
+        _appFileService = appFileService;
     }
 
     [AllowAnonymous]
@@ -68,80 +69,64 @@ public class UsersController : BaseApiController
     [HttpPost("auth")]
     public async Task<ActionResult<ResultloginDto>> LoginUsers(LoginDto data)
     {
-        try
-        {
-            if (data == null) return BadRequest("Invalid Username / Password, User not found");
+        if (data is null) return BadRequest("Invalid Username / Password, User not found");
 
-            AppUser? user = await _userService.AuthenticateUser(data);
+        AppUser? user = await _userService.AuthenticateUser(data);
 
-            // string? ip = _userService.GetUserIpAddress(HttpContext); // get user ip address from http
+        // string? ip = _userService.GetUserIpAddress(HttpContext); // get user ip address from http
 
-            if (user == null) return BadRequest("Invalid Username / Password, User not found");
+        if (user is null) return BadRequest("Invalid Username / Password, User not found");
 
-            if (user.Status == (int)StatusEnum.disable) return Ok("Your account is disabled. Please Contact the admin");
+        if (user.Status == (int)StatusEnum.disable) return Ok("Your account is disabled. Please Contact the admin");
 
-            // create user auth token
-            var result = _mapper.Map<ResultloginDto>(user);
-            result.Token = _tokenService.CreateToken(result?.Id ?? "", user?.Role ?? 0, true);
+        // create user auth token
+        var result = _mapper.Map<ResultloginDto>(user);
+        result.Token = _tokenService.CreateToken(result.Id, user.Role, true);
 
-            return Ok(result);
-        }
-        catch (Exception e)
-        {
-            _logger.LogError("An error occured during login ${message}", e.Message);
-            return BadRequest("An error occured or user not found" + e);
-        }
+        return Ok(result);
     }
 
     [HttpGet("")]
     public async Task<ActionResult<IEnumerable<ResultPaginate<ResultUserDto>>>> GetUsers(int skip = 0, int limit = 50, string sort = "desc")
     {
-        try
+        string userId = _userService.GetConnectedUser(User);
+
+        var query = _context.Users
+            .Where(x => x.Role != (int)RoleEnum.suadmin && x.Status != (int)StatusEnum.delete && x.Id.ToString() != userId);
+
+        // Apply sorting directly in the query
+        query = sort == "desc"
+            ? query.OrderByDescending(x => x.CreatedAt)
+            : query.OrderBy(x => x.CreatedAt);
+
+        var users = await query
+            // .Include(u => u.Match.OrderByDescending(m => m.CreatedAt).Take(10))
+            .Skip(skip)
+            .Take(limit)
+            .ToListAsync();
+
+        foreach (var user in users)
         {
-            string userId = _userService.GetConnectedUser(User);
-
-            var query = _context.Users
-                .Where(x => x.Role != (int)RoleEnum.suadmin && x.Status != (int)StatusEnum.delete && x.Id.ToString() != userId);
-
-            // Apply sorting directly in the query
-            query = sort == "desc"
-                ? query.OrderByDescending(x => x.CreatedAt)
-                : query.OrderBy(x => x.CreatedAt);
-
-            var users = await query
-                // .Include(u => u.Match.OrderByDescending(m => m.CreatedAt).Take(10))
-                .Skip(skip)
-                .Take(limit)
+            user.Match = await _context.Matches
+                .Where(m => m.UserId == user.Id)
+                .OrderByDescending(m => m.CreatedAt)
+                .Take(5)
                 .ToListAsync();
-
-            foreach (var user in users)
-            {
-                user.Match = await _context.Matches
-                    .Where(m => m.UserId == user.Id)
-                    .OrderByDescending(m => m.CreatedAt)
-                    .Take(5)
-                    .ToListAsync();
-            }
-
-            // Map to DTO after fetching with included matches
-            var result = _mapper.Map<IEnumerable<ResultUserDto>>(users);
-
-            // Count before applying pagination for accuracy
-            var totalCount = await query.CountAsync();
-            //
-            return Ok(new ResultPaginate<ResultUserDto>
-            {
-                Data = result,
-                Limit = limit,
-                Skip = skip,
-                Total = totalCount
-            });
         }
-        catch (Exception e)
+
+        // Map to DTO after fetching with included matches
+        var result = _mapper.Map<IEnumerable<ResultUserDto>>(users);
+
+        // Count before applying pagination for accuracy
+        var totalCount = await query.CountAsync();
+        //
+        return Ok(new ResultPaginate<ResultUserDto>
         {
-            _logger.LogError("An error occured while getting users ${message}", e.Message);
-            return BadRequest("An error occurred or user not found"); // Log exception details separately
-        }
+            Data = result,
+            Limit = limit,
+            Skip = skip,
+            Total = totalCount
+        });
     }
 
     [HttpPost("validate-token")]
@@ -155,7 +140,7 @@ public class UsersController : BaseApiController
         string cacheKey = "user_" + id;
         var cachedMatches = _memoryCache.Get(cacheKey);
 
-        if (cachedMatches != null)
+        if (cachedMatches is not null)
         {
             return Ok(cachedMatches);
         }
@@ -173,132 +158,100 @@ public class UsersController : BaseApiController
     [HttpPost("forget-password")]
     public async Task<ActionResult<ResultForgetPasswordDto>> FogetPassword(ForgetPasswordDto data)
     {
-        try
-        {
-            AppUser? user = await _userService.GetUserByEmail(data.Email);
+        AppUser? user = await _userService.GetUserByEmail(data.Email);
 
-            if (user == null) return BadRequest("The provided email is not found");
+        if (user is null) return BadRequest("The provided email is not found");
 
-            ResultForgetPasswordDto? result = await _userService.ForgetPassword(user);
+        ResultForgetPasswordDto? result = await _userService.ForgetPassword(user);
 
-            if (result == null) return BadRequest("An error occured please retry later");
+        if (result is null) return BadRequest("An error occured please retry later");
 
-            return result;
-        }
-        catch (Exception e)
-        {
-            _logger.LogError("An error occured ${message}", e.Message);
-            return BadRequest("An error occured ");
-        }
+        return result;
     }
 
     [HttpPost("verify-token")]
     public async Task<ActionResult<BooleanReturnDto>> VerifyAuthToken(VerifyAuthTokenDto data)
     {
-        try
+        var existingToken = await _userService.AuthTokenIsValid(data.Otp, data.Token, data.Type);
+        if (existingToken is null) return NotFound("Invalid token or otp code");
+
+        // validate and update the token usage/status for reusability purposes
+        if (existingToken.UsageType == (int)TokenUsageTypeEnum.forgetPassword)
         {
-            var existingToken = await _userService.AuthTokenIsValid(data.Otp, data.Token, data.Type);
-            if (existingToken == null) return NotFound("Invalid token or otp code");
+            string token = Guid.NewGuid().ToString(); //generate a new token and replace the current
 
-            // validate and update the token usage/status for reusability purposes
-            if (existingToken.UsageType == (int)TokenUsageTypeEnum.forgetPassword)
-            {
-                string token = Guid.NewGuid().ToString(); //generate a new token and replace the current
-
-                existingToken.UsageType = (int)TokenUsageTypeEnum.resetPassword;
-                existingToken.Token = token;
-                existingToken.ExpireAt = DateTime.UtcNow.AddMinutes(AppConstants.TokenValidity);
-            }
-            else
-            {
-                existingToken.Status = (int)StatusEnum.disable;
-            }
-
-            await _context.SaveChangesAsync(); // save new changes
-
-            return Ok(new BooleanReturnDto
-            {
-                Status = true,
-                Message = "Otp code validated successfully",
-            });
+            existingToken.UsageType = (int)TokenUsageTypeEnum.resetPassword;
+            existingToken.Token = token;
+            existingToken.ExpireAt = DateTime.UtcNow.AddMinutes(AppConstants.TokenValidity);
         }
-        catch (Exception e)
+        else
         {
-            _logger.LogError("An error occured ${message}", e.Message);
-            return BadRequest("An error occured or invalid token ");
+            existingToken.Status = (int)StatusEnum.disable;
         }
+
+        await _context.SaveChangesAsync(); // save new changes
+
+        return Ok(new BooleanReturnDto
+        {
+            Status = true,
+            Message = "Otp code validated successfully",
+        });
     }
 
     [HttpPost("change-password")]
     public async Task<ActionResult<BooleanReturnDto>> ChangePassword(ChangePasswordDto data)
     {
-        try
-        {
-            var existingToken = await _userService.AuthTokenIsValid(null, data.Token, (int)TokenUsageTypeEnum.resetPassword);
-            if (existingToken == null) return NotFound("Invalid or expired token");
+        var existingToken = await _userService.AuthTokenIsValid(null, data.Token, (int)TokenUsageTypeEnum.resetPassword);
+        if (existingToken == null) return NotFound("Invalid or expired token");
 
-            existingToken.Status = (int)StatusEnum.disable;
-            await _context.SaveChangesAsync();
+        existingToken.Status = (int)StatusEnum.disable;
+        await _context.SaveChangesAsync();
 
-            AppUser? user = await _userService.GetUserByEmail(existingToken.Email);
+        AppUser? user = await _userService.GetUserByEmail(existingToken.Email);
 
-            if (user == null) return BadRequest("An error occured or invalid token"); // check if user exist or not
+        if (user == null) return BadRequest("An error occured or invalid token"); // check if user exist or not
 
-            BooleanReturnDto? result = await _userService.ChangeForgetPassword(user, data);
+        BooleanReturnDto? result = await _userService.ChangeForgetPassword(user, data);
 
-            if (result == null) return BadRequest("An error occured please try again later");
+        if (result == null) return BadRequest("An error occured please try again later");
 
-            return result;
-        }
-        catch (Exception e)
-        {
-            _logger.LogError("An error occured ${message}", e.Message);
-            return BadRequest("An error occured ");
-        }
+        return result;
     }
 
     [HttpPut("")]
     public async Task<ActionResult<ResultUserDto>> Update(UpdateProfile data)
     {
-        try
+        string userId = _userService.GetConnectedUser(User);
+
+        AppUser? user = await _userService.GetUserById(userId);
+
+        if (user == null) return BadRequest("An error occured");
+
+        if (data.UserName is not null)
         {
-            string userId = _userService.GetConnectedUser(User);
+            if (await _userService.UserNameExist(data.UserName, userId)) return BadRequest("UserName already exists");
 
-            AppUser? user = await _context.Users.FirstOrDefaultAsync(u => u.Id.ToString() == userId);
-
-            if (user == null) return BadRequest("An error occured");
-
-            if (data?.UserName != null)
-            {
-                if (await _userService.UserNameExist(data.UserName, userId)) return BadRequest("UserName already exists");
-
-                user.UserName = data.UserName;
-            }
-
-            if (data?.Email != null)
-            {
-                if (data?.Password == null) return BadRequest("Password is required to update the profile email"); // return error if trying to update email without providing current password
-
-                if (!_userService.UserPasswordIsValid(user.PasswordSalt, user.PasswordHash, data.Password)) return Unauthorized("Invalid Password");
-
-                if (await _userService.UserEmailExist(data.Email, userId)) return BadRequest("Email already exists"); // return error if email already exist
-
-                user.Email = data.Email;
-            }
-
-            user.FirstName = data?.FirstName ?? user.FirstName;
-            user.LastName = data?.LastName ?? user.LastName;
-            user.Age = data?.Age ?? user.Age;
-
-            await _context.SaveChangesAsync();
-
-            return Ok(_mapper.Map<ResultUserDto>(user));
+            user.UserName = data.UserName;
         }
-        catch (Exception e)
+
+        if (data.Email is not null)
         {
-            _logger.LogError("An error occured during profile update ${message}", e.Message);
-            return BadRequest("An error occured ");
+            if (data?.Password == null) return BadRequest("Password is required to update the profile email"); // return error if trying to update email without providing current password
+
+            if (!_userService.UserPasswordIsValid(user.PasswordSalt, user.PasswordHash, data.Password)) return Unauthorized("Invalid Password");
+
+            if (await _userService.UserEmailExist(data.Email, userId)) return BadRequest("Email already exists"); // return error if email already exist
+
+            user.Email = data.Email;
         }
+
+        user.FirstName = data?.FirstName ?? user.FirstName;
+        user.LastName = data?.LastName ?? user.LastName;
+        user.Age = data?.Age ?? user.Age;
+
+        await _context.SaveChangesAsync();
+
+        return Ok(_mapper.Map<ResultUserDto>(user));
     }
 
     [HttpDelete("")]
@@ -310,5 +263,26 @@ public class UsersController : BaseApiController
         if (result == null) return BadRequest("An error occured or user not found");
 
         return result;
+    }
+
+    [HttpPut("picture")]
+    public async Task<ActionResult<ResultUserDto>> UpdatePicture([FromForm] IFormFile image)
+    {
+        string userId = _userService.GetConnectedUser(User);
+
+        AppUser? user = await _userService.GetUserById(userId);
+
+        if (user == null) return BadRequest("An error occured");
+
+        string? fileUrl = await _appFileService.UploadFile(image, userId, "gallery");
+
+        if (fileUrl is not null)
+        {
+            user.Photo = fileUrl;
+            await _context.SaveChangesAsync();
+            return Ok(_mapper.Map<ResultUserDto>(user));
+        }
+
+        return BadRequest("Couldn't update the profile image. Retry later");
     }
 }

@@ -46,3 +46,6 @@ public static class AppConstants
     public const int PasswordMinLength = 8;
 }
 
+public class SingleFileUpload {
+    public required IFormFile File {get; set;}
+}

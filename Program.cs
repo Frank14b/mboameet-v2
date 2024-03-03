@@ -18,9 +18,9 @@ using API.Graphql.Schema;
 using API.Mutation;
 using GraphQL.Types;
 using GraphiQl;
+using Microsoft.Extensions.FileProviders;
 // using NRedisStack;
 // using NRedisStack.RedisStackCommands;
-using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -135,6 +135,7 @@ builder.Services.AddScoped<IMailService, MailService>();
 builder.Services.AddScoped<IChatService, ChatService>();
 builder.Services.AddScoped<IMatchService, MatchService>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IAppFileService, AppFileService>();
 
 builder.Services.AddSignalR();
 builder.Services.AddMemoryCache();
@@ -180,10 +181,12 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.UseHttpsRedirection();
 app.MapControllers();
+app.UseStaticFiles(new StaticFileOptions {
+    FileProvider = new PhysicalFileProvider(Path.Combine(app.Environment.ContentRootPath, "storage"))
+});
 // register hub routes
 app.MapHub<AppHub>("/apphub");
 app.Run();
 
-// app.UseStaticFiles();
 // app.UseRouting();
 // app.MapRazorPages();

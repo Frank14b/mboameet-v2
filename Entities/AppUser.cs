@@ -45,6 +45,8 @@ namespace API.Entities
         public DateTime UpdatedAt { get; set; }
 
         public bool IsVerified { get; set; } = false;
+
+        public string? Photo {get; set;}
     }
 
     public enum RoleEnum
