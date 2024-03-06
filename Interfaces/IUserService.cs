@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using API.DTOs;
 using API.Entities;
+using Microsoft.AspNetCore.Mvc;
 
 namespace API.Interfaces;
 
@@ -27,4 +28,5 @@ public interface IUserService
     Task<ResultForgetPasswordDto?> ForgetPassword(AppUser user);
     Task<BooleanReturnDto?> ChangeForgetPassword(AppUser user, ChangePasswordDto data);
     string? GetUserIpAddress(HttpContext httpContext);
+    Task<ResultUserDto?> UpdateProfileImage(AppUser user, [FromForm] IFormFile image, string folder);
 }

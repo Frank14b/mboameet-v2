@@ -274,15 +274,10 @@ public class UsersController : BaseApiController
 
         if (user == null) return BadRequest("An error occured");
 
-        string? fileUrl = await _appFileService.UploadFile(image, userId, "gallery");
+        ResultUserDto? result = await _userService.UpdateProfileImage(user, image, "gallery");
 
-        if (fileUrl is not null)
-        {
-            user.Photo = fileUrl;
-            await _context.SaveChangesAsync();
-            return Ok(_mapper.Map<ResultUserDto>(user));
-        }
+        if(result is null) return BadRequest("Couldn't update the profile image. Retry later");
 
-        return BadRequest("Couldn't update the profile image. Retry later");
+        return Ok(result);
     }
 }

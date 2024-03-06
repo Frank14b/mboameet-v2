@@ -46,7 +46,7 @@ namespace API.Entities
 
         public bool IsVerified { get; set; } = false;
 
-        public string? Photo {get; set;}
+        public AppImage? Photo { get; set; }
     }
 
     public enum RoleEnum

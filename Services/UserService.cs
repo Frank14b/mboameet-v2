@@ -7,6 +7,8 @@ using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
+using Microsoft.AspNetCore.Mvc;
+using AutoMapper;
 
 namespace API.Services;
 
@@ -15,22 +17,25 @@ public class UserService : IUserService
     private readonly DataContext _dataContext;
     private readonly IMailService _mailService;
     private readonly ILogger<UserService> _logger;
+    private readonly IAppFileService _appFileService;
     private readonly ITokenService _tokenService;
-    // private readonly HttpContext _httpContext;
+    private readonly IMapper _mapper;
 
     public UserService(
         DataContext dataContext,
         IMailService mailService,
         ILogger<UserService> logger,
-        ITokenService tokenService
-     // HttpContext httpContext
+        ITokenService tokenService,
+        IAppFileService appFileService,
+        IMapper mapper
     )
     {
+        _appFileService = appFileService;
         _dataContext = dataContext;
         _mailService = mailService;
         _logger = logger;
         _tokenService = tokenService;
-        // _httpContext = httpContext;
+        _mapper = mapper;
     }
 
     public string GetConnectedUser(ClaimsPrincipal User)
@@ -203,7 +208,19 @@ public class UserService : IUserService
     {
         try
         {
-            var result = await _dataContext.Users.Where(x => x.Status == (int)StatusEnum.enable && x.Id.ToString() == id).FirstAsync();
+            var result = await _dataContext.Users.Select(u => new AppUser
+            {
+                Id = u.Id,
+                UserName = u.UserName,
+                FirstName = u.FirstName,
+                LastName = u.LastName,
+                Status = u.Status,
+                Email = u.Email,
+                PasswordHash = u.PasswordHash,
+                PasswordSalt = u.PasswordSalt,
+                Photo = null
+            }).Where(x => x.Status == (int)StatusEnum.enable && x.Id.ToString() == id).FirstAsync();
+
             return result;
         }
         catch (Exception ex)
@@ -283,7 +300,7 @@ public class UserService : IUserService
                 PasswordSalt = password.PasswordSalt,
                 FirstName = data?.FirstName,
                 LastName = data?.LastName,
-                Email = data?.Email,
+                Email = data?.Email ?? "",
                 Age = 18,
                 Role = (int)RoleEnum.user,
                 Status = (int)StatusEnum.enable,
@@ -317,7 +334,7 @@ public class UserService : IUserService
     {
         try
         {
-            var user = await _dataContext.Users.FirstOrDefaultAsync(x => ((x.UserName == data.UserName) || (x.Email == data.UserName)) && x.Role != (int)RoleEnum.suadmin && x.Status != (int)StatusEnum.delete);
+            var user = await _dataContext.Users.FirstAsync(x => ((x.UserName == data.UserName) || (x.Email == data.UserName)) && x.Role != (int)RoleEnum.suadmin && x.Status != (int)StatusEnum.delete);
 
             if (user?.PasswordSalt != null)
             {
@@ -472,6 +489,45 @@ public class UserService : IUserService
                 Message = "Password has been changed successfully",
             };
         }
+        catch (Exception ex)
+        {
+            _logger.LogError("Error during forgot password ${message}", ex.Message);
+            return null;
+        }
+    }
+
+    public async Task<ResultUserDto?> UpdateProfileImage(AppUser user, [FromForm] IFormFile image, string folder)
+    {
+        try
+        {
+            string? fileUrl = await _appFileService.UploadFile(image, user.Id.ToString(), "gallery");
+
+            if (fileUrl is not null)
+            {
+
+                Console.WriteLine(fileUrl);
+
+                var photo = new AppImage
+                {
+                    Url = fileUrl,
+                    PreviewUrl = fileUrl,
+                    AltText = "",
+                    Extension = ""
+                };
+
+                user.Photo = photo;
+
+                Console.WriteLine(photo);
+
+                Console.WriteLine(user.Photo.Url);
+
+                await _dataContext.SaveChangesAsync();
+                return _mapper.Map<ResultUserDto>(user);
+            }
+
+            return null;
+        }
+
         catch (Exception ex)
         {
             _logger.LogError("Error during forgot password ${message}", ex.Message);

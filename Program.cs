@@ -59,7 +59,7 @@ if (connectionString == null)
 
 var client = new MongoClient(connectionString); // mongo db client initiate connection
 
-var db = client.GetDatabase("mboameet");
+var db = client.GetDatabase("mboameet-v2");
 
 builder.Services.AddDbContext<DataContext>(opt =>
 {
@@ -136,6 +136,7 @@ builder.Services.AddScoped<IChatService, ChatService>();
 builder.Services.AddScoped<IMatchService, MatchService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IAppFileService, AppFileService>();
+builder.Services.AddScoped<IFeedService, FeedService>();
 
 builder.Services.AddSignalR();
 builder.Services.AddMemoryCache();
