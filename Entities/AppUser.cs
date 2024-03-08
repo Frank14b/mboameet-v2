@@ -1,8 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using MongoDB.Bson;
 using API.DTOs;
-using MongoDB.Bson.Serialization.Attributes;
 using Microsoft.EntityFrameworkCore;
 
 namespace API.Entities
@@ -11,8 +9,7 @@ namespace API.Entities
     [Index(nameof(Email), nameof(UserName), IsUnique = true)]
     public class AppUser
     {
-        [BsonId]
-        public ObjectId Id { get; set; }
+        public int Id { get; set; }
 
         [MinLength(3)]
         public required string UserName { get; set; }
@@ -44,9 +41,9 @@ namespace API.Entities
 
         public DateTime UpdatedAt { get; set; }
 
-        public bool IsVerified { get; set; } = false;
+        public int IsVerified { get; set; }
 
-        public AppImage? Photo { get; set; }
+        public string? Photo { get; set; }
     }
 
     public enum RoleEnum

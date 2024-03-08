@@ -9,8 +9,7 @@ namespace API.Entities;
 [Table("groupaccess")]
 public class AppGroupeAcces
 {
-    [BsonId]
-    public ObjectId Id { get; set; }
+    public int Id { get; set; }
 
     [Required]
     public required string Name { get; set; }

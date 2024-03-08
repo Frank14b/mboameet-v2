@@ -6,16 +6,16 @@ namespace API.DTOs
     public class AddMatchDto
     {
         [Required]
-        public required string MatchedUserId { get; set; }
+        public required int MatchedUserId { get; set; }
     }
 
     public class MatchesResultDto
     {
-        public required string Id { get; set; }
+        public required int Id { get; set; }
 
-        public required string UserId { get; set; }
+        public required int UserId { get; set; }
 
-        public required string MatchedUserId { get; set; }
+        public required int MatchedUserId { get; set; }
 
         public ResultUserDto? User { get; set; }
 

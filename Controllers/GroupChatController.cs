@@ -34,13 +34,13 @@ public class GroupChatController : BaseApiController
     {
         try
         {
-            string id = _userService.GetConnectedUser(User);
+            int id = _userService.GetConnectedUser(User);
 
-            if (!(await _matchService.CheckIfUserIsMatch(id, data.Receiver.ToString())).Status) return BadRequest("You must be matching with this user to send a message");
+            if (!(await _matchService.CheckIfUserIsMatch(id, data.Receiver)).Status) return BadRequest("You must be matching with this user to send a message");
 
             var newChat = _mapper.Map<AppChat>(data);
             newChat.MessageType = (int)EnumMessageType.text;
-            newChat.Sender = ObjectId.Parse(id);
+            newChat.Sender = id;
 
             _dataContext.Add(newChat);
             await _dataContext.SaveChangesAsync();
@@ -56,13 +56,13 @@ public class GroupChatController : BaseApiController
     }
 
     [HttpGet("{userId}")]
-    public async Task<ActionResult<ResultPaginate<MessageResultDto>>> GetMessages(string userId, int skip = 0, int limit = 50, string sort = "desc")
+    public async Task<ActionResult<ResultPaginate<MessageResultDto>>> GetMessages(int userId, int skip = 0, int limit = 50, string sort = "desc")
     {
         try
         {
-            string id = _userService.GetConnectedUser(User);
+            int id = _userService.GetConnectedUser(User);
 
-            var query = _dataContext.Chats.Where(m => m.Status == (int)StatusEnum.enable && ((m.Sender.ToString() == id && m.Receiver.ToString() == userId) || (m.Receiver.ToString() == id && m.Sender.ToString() == userId)));
+            var query = _dataContext.Chats.Where(m => m.Status == (int)StatusEnum.enable && ((m.Sender == id && m.Receiver == userId) || (m.Receiver == id && m.Sender == userId)));
 
             int totalMessage = await query.CountAsync();
 

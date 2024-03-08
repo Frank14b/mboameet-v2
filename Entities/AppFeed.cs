@@ -1,16 +1,13 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using API.DTOs;
-using MongoDB.Bson;
-using MongoDB.Bson.Serialization.Attributes;
  
 namespace API.Entities;
 
 [Table("feeds")]
 public class AppFeed
 {
-    [BsonId]
-    public ObjectId Id { get; set; }
+    public int Id { get; set; }
 
     public string? Message { get; set; }
 
@@ -25,5 +22,5 @@ public class AppFeed
     [EnumDataType(typeof(StatusEnum))]
     public int Status { get; set; } = (int) StatusEnum.enable;
     
-    public ObjectId UserId { get; set; }
+    public int UserId { get; set; }
 }

@@ -21,7 +21,7 @@ public class GroupService : IGroupService
         _mapper = mapper;
     }
 
-    public async Task<bool> CheckIfUserGroupExist(string userId, string name)
+    public async Task<bool> CheckIfUserGroupExist(int userId, string name)
     {
         try
         {
@@ -36,11 +36,11 @@ public class GroupService : IGroupService
         }
     }
 
-    public async Task<bool> CheckIfUserIsInTheGroup(string userId, string groupId)
+    public async Task<bool> CheckIfUserIsInTheGroup(int userId, int groupId)
     {
         try
         {
-            bool groupUser = await _dataContext.GroupUsers.AnyAsync(gu => gu.Status != (int)StatusEnum.delete && gu.UserId.ToString() == userId && gu.GroupId.ToString() == groupId);
+            bool groupUser = await _dataContext.GroupUsers.AnyAsync(gu => gu.Status != (int)StatusEnum.delete && gu.UserId == userId && gu.GroupId == groupId);
             if (groupUser) return true;
             return false;
         }
@@ -51,11 +51,11 @@ public class GroupService : IGroupService
         }
     }
 
-    public async Task<bool> UpdateGroupById(string id, UpdateGroupDto data, string userId)
+    public async Task<bool> UpdateGroupById(int id, UpdateGroupDto data, int userId)
     {
         try
         {
-            AppGroup? group = await _dataContext.Groups.FirstOrDefaultAsync(g => g.Status != (int)StatusEnum.delete && g.UserId.ToString() == userId && g.Id.ToString() == id);
+            AppGroup? group = await _dataContext.Groups.FirstOrDefaultAsync(g => g.Status != (int)StatusEnum.delete && g.UserId == userId && g.Id == id);
             if (group == null) return false;
 
             group.Name = data?.Name ?? group.Name;
@@ -73,11 +73,11 @@ public class GroupService : IGroupService
         }
     }
 
-    public async Task<bool> DeleteGroupById(string id, string userId)
+    public async Task<bool> DeleteGroupById(int id, int userId)
     {
         try
         {
-            AppGroup? group = await _dataContext.Groups.FirstOrDefaultAsync(g => g.Status != (int)StatusEnum.delete && g.UserId.ToString() == userId && g.Id.ToString() == id);
+            AppGroup? group = await _dataContext.Groups.FirstOrDefaultAsync(g => g.Status != (int)StatusEnum.delete && g.UserId == userId && g.Id == id);
             if (group == null) return false;
 
             group.Status = (int)StatusEnum.delete;
@@ -92,23 +92,23 @@ public class GroupService : IGroupService
         }
     }
 
-    public async Task<bool> CheckIfUserCreatedTheGroup(string id, string userId)
+    public async Task<bool> CheckIfUserCreatedTheGroup(int id, int userId)
     {
-        bool group = await _dataContext.Groups.AnyAsync(g => g.Id.ToString() == id && g.UserId.ToString() == userId);
+        bool group = await _dataContext.Groups.AnyAsync(g => g.Id == id && g.UserId == userId);
         if (!group) return false;
 
         return true;
     }
 
-    public async Task<bool> JoinTheGroup(string id, string userId, JoinGroupDto data)
+    public async Task<bool> JoinTheGroup(int id, int userId, JoinGroupDto data)
     {
         try
         {
             AppGroupUser newGroupUser = new()
             {
-                UserId = ObjectId.Parse(userId),
-                GroupId = ObjectId.Parse(id),
-                GroupAccesId = ObjectId.Parse(data.GroupAccesId)
+                UserId = userId,
+                GroupId = id,
+                GroupAccesId = data.GroupAccesId
             };
 
             await _dataContext.GroupUsers.AddAsync(newGroupUser);
@@ -123,12 +123,12 @@ public class GroupService : IGroupService
         }
     }
 
-    public async Task<GroupListDto?> CreateNewGroup(string userId, CreateGroupDto data)
+    public async Task<GroupListDto?> CreateNewGroup(int userId, CreateGroupDto data)
     {
         try
         {
             var newGroup = _mapper.Map<AppGroup>(data);
-            newGroup.UserId = ObjectId.Parse(userId);
+            newGroup.UserId = userId;
 
             await _dataContext.AddAsync(newGroup);
             await _dataContext.SaveChangesAsync();

@@ -38,14 +38,14 @@ public class UserService : IUserService
         _mapper = mapper;
     }
 
-    public string GetConnectedUser(ClaimsPrincipal User)
+    public int GetConnectedUser(ClaimsPrincipal User)
     {
         try
         {
             ClaimsPrincipal currentUser = User;
             var userId = currentUser.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "";
 
-            return userId;
+            return int.Parse(userId);
         }
         catch (Exception ex)
         {
@@ -178,33 +178,33 @@ public class UserService : IUserService
         };
     }
 
-    public async Task<bool> UserIdExist(string id)
+    public async Task<bool> UserIdExist(int id)
     {
-        var result = await _dataContext.Users.AnyAsync(x => x.Status == (int)StatusEnum.enable && x.Id.ToString() == id);
+        var result = await _dataContext.Users.AnyAsync(x => x.Status == (int)StatusEnum.enable && x.Id == id);
         return result;
     }
 
-    public async Task<bool> UserNameExist(string username, string? userId)
+    public async Task<bool> UserNameExist(string username, int? userId)
     {
         if (userId != null)
         {
-            return await _dataContext.Users.AnyAsync(x => x.UserName.ToLower() == username.ToLower() && x.Id.ToString() != userId);
+            return await _dataContext.Users.AnyAsync(x => x.UserName.ToLower() == username.ToLower() && x.Id != userId);
         }
 
         return await _dataContext.Users.AnyAsync(x => x.UserName.ToLower() == username.ToLower());
     }
 
-    public async Task<bool> UserEmailExist(string useremail, string? userId)
+    public async Task<bool> UserEmailExist(string useremail, int? userId)
     {
         if (userId != null)
         {
-            return await _dataContext.Users.AnyAsync((x) => x.Email != null && x.Email.ToLower() == useremail.ToLower() && x.Id.ToString() != userId);
+            return await _dataContext.Users.AnyAsync((x) => x.Email != null && x.Email.ToLower() == useremail.ToLower() && x.Id != userId);
         }
 
         return await _dataContext.Users.AnyAsync((x) => x.Email != null && x.Email.ToLower() == useremail.ToLower());
     }
 
-    public async Task<AppUser?> GetUserById(string id)
+    public async Task<AppUser?> GetUserById(int id)
     {
         try
         {
@@ -219,7 +219,7 @@ public class UserService : IUserService
                 PasswordHash = u.PasswordHash,
                 PasswordSalt = u.PasswordSalt,
                 Photo = null
-            }).Where(x => x.Status == (int)StatusEnum.enable && x.Id.ToString() == id).FirstAsync();
+            }).Where(x => x.Status == (int)StatusEnum.enable && x.Id == id).FirstAsync();
 
             return result;
         }
@@ -233,12 +233,6 @@ public class UserService : IUserService
     public async Task<List<AppUser>> GetUsers()
     {
         var result = await _dataContext.Users.Where(x => x.Status == (int)StatusEnum.enable).ToListAsync();
-
-        foreach (var user in result)
-        {
-
-        }
-
         return result;
     }
 
@@ -250,10 +244,32 @@ public class UserService : IUserService
         return test;
     }
 
+    public byte[] ConvertHexToByte(string hexString)
+    {
+        string[] byteStringArray = hexString.Split('-');
+
+        // Create a byte array to store the converted values
+        byte[] byteArray = new byte[byteStringArray.Length];
+
+        // Convert each substring to a byte and store it in the array
+        for (int i = 0; i < byteStringArray.Length; i++)
+        {
+            byteArray[i] = Convert.ToByte(byteStringArray[i], 16);
+        }
+
+        return byteArray;
+    }
+
     public bool UserPasswordIsValid(byte[] passwordSalt, byte[] passwordHash, string password)
     {
         using var hmac = new HMACSHA512(passwordSalt);
         var computedHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(password));
+
+        Console.WriteLine(passwordSalt[0]);
+        Console.WriteLine(computedHash[1]);
+
+        // Console.WriteLine(ConvertHexToByte(passwordSalt)[0]);
+        // Console.WriteLine(ConvertHexToByte(passwordSalt)[1]);
 
         for (int i = 0; i < computedHash.Length; i++)
         {
@@ -365,11 +381,11 @@ public class UserService : IUserService
         }
     }
 
-    public async Task<BooleanReturnDto?> DeleteUserAccount(DeleteProfile data, string userId)
+    public async Task<BooleanReturnDto?> DeleteUserAccount(DeleteProfile data, int userId)
     {
         try
         {
-            AppUser? user = await _dataContext.Users.FirstOrDefaultAsync(u => u.Id.ToString() == userId);
+            AppUser? user = await _dataContext.Users.FirstOrDefaultAsync(u => u.Id == userId);
 
             if (user == null) return null;
 
@@ -450,7 +466,7 @@ public class UserService : IUserService
             return new ResultForgetPasswordDto
             {
                 OtpToken = otpData?.Token,
-                AccessToken = _tokenService.CreateToken(user?.Id.ToString() ?? "", (int)RoleEnum.user, true),
+                AccessToken = _tokenService.CreateToken(user?.Id ?? 0, (int)RoleEnum.user, true),
                 Message = "An email containing an otp code has been sent to you"
             };
         }
@@ -504,22 +520,7 @@ public class UserService : IUserService
 
             if (fileUrl is not null)
             {
-
-                Console.WriteLine(fileUrl);
-
-                var photo = new AppImage
-                {
-                    Url = fileUrl,
-                    PreviewUrl = fileUrl,
-                    AltText = "",
-                    Extension = ""
-                };
-
-                user.Photo = photo;
-
-                Console.WriteLine(photo);
-
-                Console.WriteLine(user.Photo.Url);
+                user.Photo = fileUrl;
 
                 await _dataContext.SaveChangesAsync();
                 return _mapper.Map<ResultUserDto>(user);

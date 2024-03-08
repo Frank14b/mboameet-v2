@@ -8,12 +8,12 @@ public class CreateFeedDto
     public List<AppImage>? Images { get; set; }
     public string? VideoLink { get; set; }
     public int Status { get; set; }
-    public required string UserId { get; set; }
+    public required int UserId { get; set; }
 }
 
 public class FeedResultDto
 {
-    public required string Id { get; set; }
+    public required int Id { get; set; }
     public string? Message { get; set; }
     public List<AppImage>? Images { get; set; }
     public string? VideoLink { get; set; }

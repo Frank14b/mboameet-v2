@@ -40,7 +40,7 @@ public class GroupController : BaseApiController
     {
         try
         {
-            string id = _userService.GetConnectedUser(User);
+            int id = _userService.GetConnectedUser(User);
 
             if (!await _groupService.CheckIfUserGroupExist(id, data.Name)) return BadRequest("Group name already exists"); // check if the group already exists
 
@@ -61,13 +61,13 @@ public class GroupController : BaseApiController
     {
         try
         {
-            string id = _userService.GetConnectedUser(User);
+            int id = _userService.GetConnectedUser(User);
 
-            var query = _dataContext.Groups.Where(g => (g.Status != (int)StatusEnum.delete && g.UserId.ToString() == id) || (g.Status == (int)StatusEnum.enable && g.UserId.ToString() != id.ToString()));
+            var query = _dataContext.Groups.Where(g => (g.Status != (int)StatusEnum.delete && g.UserId == id) || (g.Status == (int)StatusEnum.enable && g.UserId != id));
 
             if (keyword.Length > 0)
             {
-                query = _dataContext.Groups.Where(g => g.Name.Contains(keyword.ToLower()) && ((g.Status != (int)StatusEnum.delete && g.UserId.ToString() == id) || (g.Status == (int)StatusEnum.enable && g.UserId.ToString() != id.ToString())));
+                query = _dataContext.Groups.Where(g => g.Name.Contains(keyword.ToLower()) && ((g.Status != (int)StatusEnum.delete && g.UserId == id) || (g.Status == (int)StatusEnum.enable && g.UserId != id)));
             }
 
             int totalGroups = await query.CountAsync();
@@ -94,11 +94,11 @@ public class GroupController : BaseApiController
     }
 
     [HttpPatch("{id}/joins")]
-    public async Task<ActionResult<BooleanReturnDto>> JoinTheGroup(string id, JoinGroupDto data)
+    public async Task<ActionResult<BooleanReturnDto>> JoinTheGroup(int id, JoinGroupDto data)
     {
         try
         {
-            string userId = _userService.GetConnectedUser(User);
+            int userId = _userService.GetConnectedUser(User);
             //check if the group exist and not belonging to the user
             bool isOwner = await _groupService.CheckIfUserCreatedTheGroup(id, userId);
             if (isOwner) return NotFound("Invalid Group Id");
@@ -124,11 +124,11 @@ public class GroupController : BaseApiController
     }
 
     [HttpDelete("{id}")]
-    public async Task<ActionResult<BooleanReturnDto>> Delete(string id)
+    public async Task<ActionResult<BooleanReturnDto>> Delete(int id)
     {
         try
         {
-            string userId = _userService.GetConnectedUser(User);
+            int userId = _userService.GetConnectedUser(User);
             //check if the group exist and belongs to the user
             bool group = await _groupService.DeleteGroupById(id, userId);
             if (!group) return NotFound("Invalid Group Id / group not found");
@@ -147,11 +147,11 @@ public class GroupController : BaseApiController
     }
 
     [HttpPut("{id}")]
-    public async Task<ActionResult<BooleanReturnDto>> Update(string id, UpdateGroupDto data)
+    public async Task<ActionResult<BooleanReturnDto>> Update(int id, UpdateGroupDto data)
     {
         try
         {
-            string userId = _userService.GetConnectedUser(User);
+            int userId = _userService.GetConnectedUser(User);
             //check if the group exist and belongs to the user and update
             bool group = await _groupService.UpdateGroupById(id, data, userId);
             if (!group) return NotFound("Invalid Group Id / group not found");

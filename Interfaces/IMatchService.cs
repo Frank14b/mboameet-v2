@@ -5,16 +5,16 @@ namespace API.Interfaces
 {
     public interface IMatchService
     {
-        Task<BooleanReturnDto> CheckIfUserIsMatch(string user, string matchUser);
-        Task<BooleanReturnDto> CheckIfUserReceivedMatchRequest(string user, string matchUser, int type);
-        Task<BooleanReturnDto> CheckIfUserSendMatchRequest(string user, string matchUser, int type);
-        Task<BooleanReturnDto> CheckIfMatchRequestExist(string user, string matchUser);
-        Task<AppMatch?> GetUserMatchSendRequest(string userId, string? id);
-        Task<AppMatch?> GetUserMatchReceivedRequest(string userId, string? id);
-        Task<BooleanReturnDto> DeleteUserMatchRequest(string userId, string id);
-        Task<BooleanReturnDto> ReplyMatchRequest(string userId, string action, string id);
-        Task<BooleanReturnDto> CancelMatchRequest(string userId, string id);
-        Task<MatchesResultDto?> CreateUserMatch(string userId, AddMatchDto data);
-        Task<ResultPaginate<MatchesResultDto>?> GetUserMatches(string userId, int skip = 0, int limit = 50, string sort = "desc");
+        Task<BooleanReturnDto> CheckIfUserIsMatch(int user, int matchUser);
+        Task<BooleanReturnDto> CheckIfUserReceivedMatchRequest(int user, int matchUser, int type);
+        Task<BooleanReturnDto> CheckIfUserSendMatchRequest(int user, int matchUser, int type);
+        Task<BooleanReturnDto> CheckIfMatchRequestExist(int user, int matchUser);
+        Task<AppMatch?> GetUserMatchSendRequest(int userId, int? id);
+        Task<AppMatch?> GetUserMatchReceivedRequest(int userId, int? id);
+        Task<BooleanReturnDto> DeleteUserMatchRequest(int userId, int id);
+        Task<BooleanReturnDto> ReplyMatchRequest(int userId, string action, int id);
+        Task<BooleanReturnDto> CancelMatchRequest(int userId, int id);
+        Task<MatchesResultDto?> CreateUserMatch(int userId, AddMatchDto data);
+        Task<ResultPaginate<MatchesResultDto>?> GetUserMatches(int userId, int skip = 0, int limit = 50, string sort = "desc");
     }
 }

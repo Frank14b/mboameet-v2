@@ -4,5 +4,5 @@ using API.Entities;
 namespace API.Interfaces;
 
 public interface IFeedService {
-    Task<AppFeed?> CreateNewFeed(CreateFeedDto data, string userId);
+    Task<AppFeed?> CreateNewFeed(CreateFeedDto data, int userId);
 }

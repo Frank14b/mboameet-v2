@@ -30,7 +30,7 @@ public class MatchController : BaseApiController
     {
         try
         {
-            string userId = _userService.GetConnectedUser(User);
+            int userId = _userService.GetConnectedUser(User);
 
             if (data.MatchedUserId == userId) return BadRequest("Invalid user id");
 
@@ -56,7 +56,7 @@ public class MatchController : BaseApiController
     {
         try
         {
-            string userId = _userService.GetConnectedUser(User);
+            int userId = _userService.GetConnectedUser(User);
 
             ResultPaginate<MatchesResultDto>? matches = await _matchService.GetUserMatches(userId, skip, limit, sort);
 
@@ -71,11 +71,11 @@ public class MatchController : BaseApiController
     }
 
     [HttpDelete("{id}")]
-    public async Task<ActionResult<BooleanReturnDto>> CancelMatchRequest(string id)
+    public async Task<ActionResult<BooleanReturnDto>> CancelMatchRequest(int id)
     {
         try
         {
-            string userId = _userService.GetConnectedUser(User);
+            int userId = _userService.GetConnectedUser(User);
 
             BooleanReturnDto result = await _matchService.CancelMatchRequest(userId, id);
             return result;
@@ -87,11 +87,11 @@ public class MatchController : BaseApiController
     }
 
     [HttpPatch("{id}/review")]
-    public async Task<ActionResult<BooleanReturnDto>> ReplyMatchRequest(string id, string action = "approved")
+    public async Task<ActionResult<BooleanReturnDto>> ReplyMatchRequest(int id, string action = "approved")
     {
         try
         {
-            string userId = _userService.GetConnectedUser(User);
+            int userId = _userService.GetConnectedUser(User);
 
             if (action != "approved" && action != "declined") return BadRequest("Invalid action : approved or declined");
 
@@ -106,11 +106,11 @@ public class MatchController : BaseApiController
     }
 
     [HttpDelete("{id}")]
-    public async Task<ActionResult<BooleanReturnDto>> DeleteMyRequest(string id)
+    public async Task<ActionResult<BooleanReturnDto>> DeleteMyRequest(int id)
     {
         try
         {
-            string userId = _userService.GetConnectedUser(User);
+            int userId = _userService.GetConnectedUser(User);
 
             BooleanReturnDto match = await _matchService.DeleteUserMatchRequest(userId, id);
             return match;

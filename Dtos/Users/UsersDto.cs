@@ -62,13 +62,13 @@ public class SocialAuthDto
 public class DeleteUserDto
 {
     [Required]
-    public required string Id { get; set; }
+    public required int Id { get; set; }
 }
 
 public class UpdateStatusUserDto
 {
     [Required]
-    public required string Id { get; set; }
+    public required int Id { get; set; }
 
     [Required]
     [EnumDataType(typeof(StatusEnum))]
@@ -105,7 +105,7 @@ public class UpdateProfileDto
 
 public class EditUserDto
 {
-    public required string Id { get; set; }
+    public required int Id { get; set; }
 
     [MinLength(1)]
     public required string UserName { get; set; }
@@ -142,7 +142,7 @@ public class CreateUserDto
 
 public class CreateAuthTokenDto
 {
-    public ObjectId? UserId { get; set; }
+    public int? UserId { get; set; }
 
     public string? Email { get; set; }
 
@@ -181,7 +181,7 @@ public class ChangePasswordDto
 
 public class ResultloginDto
 {
-    public required string Id { get; set; }
+    public required int Id { get; set; }
     public required string UserName { get; set; }
     public string? FirstName { get; set; }
     public string? LastName { get; set; }
@@ -204,7 +204,7 @@ public class ResultDeleteUserDto
 
 public class ResultUpdateUserDto
 {
-    public required string Id { get; set; }
+    public required int Id { get; set; }
     public string? UserName { get; set; }
     public string? FirstName { get; set; }
     public string? LastName { get; set; }
@@ -216,12 +216,12 @@ public class ResultUpdateUserDto
     public int Age { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
-    // public AppImage? Photo {get; set;}
+    // public string? Photo {get; set;}
 }
 
 public class ResultUserDto
 {
-    public required string Id { get; set; }
+    public required int Id { get; set; }
     public required string UserName { get; set; }
     public required string FirstName { get; set; } = "";
     public string? LastName { get; set; } = "";
@@ -236,7 +236,7 @@ public class ResultUserDto
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
     public List<MatchesResultDto>? Match { get; set; }
-    // public AppImage? Photo {get; set;}
+    // public string? Photo {get; set;}
 }
 
 public class ResultUsersPaginate
@@ -294,7 +294,7 @@ public class UpdateProfile
 
     [Range(18, 200)]
     public int? Age { get; set; }
-    public AppImage? Photo {get; set;}
+    public string? Photo {get; set;}
 }
 
 public class DeleteProfile

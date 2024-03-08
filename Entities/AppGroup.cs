@@ -9,8 +9,7 @@ namespace API.Entities;
 [Table("groups")]
 public class AppGroup
 {
-    [BsonId]
-    public ObjectId Id { get; set; }
+    public int Id { get; set; }
 
     [Required]
     public required string Name { get; set; }
@@ -26,9 +25,8 @@ public class AppGroup
     [EnumDataType(typeof(StatusEnum))]
     public int Status { get; set; } = (int)StatusEnum.enable;
 
-    [BsonId]
     [Required]
-    public required ObjectId UserId { get; set; }
+    public required int UserId { get; set; }
 
-    public List<string>? Files { get; set; }
+    // public List<string>? Files { get; set; }
 }

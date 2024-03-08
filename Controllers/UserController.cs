@@ -60,7 +60,7 @@ public class UsersController : BaseApiController
 
         ResultloginDto result = _mapper.Map<ResultloginDto>(user);
 
-        result.Token = _tokenService.CreateToken(user.Id.ToString(), user.Role, true);
+        result.Token = _tokenService.CreateToken(user.Id, user.Role, true);
 
         return Ok(result);
     }
@@ -89,10 +89,10 @@ public class UsersController : BaseApiController
     [HttpGet("")]
     public async Task<ActionResult<IEnumerable<ResultPaginate<ResultUserDto>>>> GetUsers(int skip = 0, int limit = 50, string sort = "desc")
     {
-        string userId = _userService.GetConnectedUser(User);
+        int userId = _userService.GetConnectedUser(User);
 
         var query = _context.Users
-            .Where(x => x.Role != (int)RoleEnum.suadmin && x.Status != (int)StatusEnum.delete && x.Id.ToString() != userId);
+            .Where(x => x.Role != (int)RoleEnum.suadmin && x.Status != (int)StatusEnum.delete && x.Id != userId);
 
         // Apply sorting directly in the query
         query = sort == "desc"
@@ -132,7 +132,7 @@ public class UsersController : BaseApiController
     [HttpPost("validate-token")]
     public async Task<ActionResult<ResultUserDto>> ValidateToken()
     {
-        string id = _userService.GetConnectedUser(User);
+        int id = _userService.GetConnectedUser(User);
 
         if (!await _userService.UserIdExist(id)) return BadRequest("User not found");
 
@@ -145,7 +145,7 @@ public class UsersController : BaseApiController
             return Ok(cachedMatches);
         }
 
-        var user = await _context.Users.Where(x => x.Id.ToString() == id).FirstOrDefaultAsync();
+        var user = await _context.Users.Where(x => x.Id == id).FirstOrDefaultAsync();
 
         var result = _mapper.Map<ResultUserDto>(user);
 
@@ -221,7 +221,7 @@ public class UsersController : BaseApiController
     [HttpPut("")]
     public async Task<ActionResult<ResultUserDto>> Update(UpdateProfile data)
     {
-        string userId = _userService.GetConnectedUser(User);
+        int userId = _userService.GetConnectedUser(User);
 
         AppUser? user = await _userService.GetUserById(userId);
 
@@ -257,7 +257,7 @@ public class UsersController : BaseApiController
     [HttpDelete("")]
     public async Task<ActionResult<BooleanReturnDto>> DeleteAccount(DeleteProfile data)
     {
-        string userId = _userService.GetConnectedUser(User);
+        int userId = _userService.GetConnectedUser(User);
 
         BooleanReturnDto? result = await _userService.DeleteUserAccount(data, userId);
         if (result == null) return BadRequest("An error occured or user not found");
@@ -268,7 +268,7 @@ public class UsersController : BaseApiController
     [HttpPut("picture")]
     public async Task<ActionResult<ResultUserDto>> UpdatePicture([FromForm] IFormFile image)
     {
-        string userId = _userService.GetConnectedUser(User);
+        int userId = _userService.GetConnectedUser(User);
 
         AppUser? user = await _userService.GetUserById(userId);
 

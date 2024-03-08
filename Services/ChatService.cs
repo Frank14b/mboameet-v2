@@ -21,11 +21,11 @@ namespace API.Services
             _mapper = mapper;
         }
 
-        public async Task<bool> CheckIfUserIsMatch(string user, string matchUser)
+        public async Task<bool> CheckIfUserIsMatch(int user, int matchUser)
         {
             try
             {
-                var query = _dataContext.Matches.Where(x => x.State == (int)MatchStateEnum.approved && x.Status == (int)StatusEnum.enable && (x.UserId.Equals(ObjectId.Parse(user)) && x.MatchedUserId.Equals(ObjectId.Parse(matchUser)) || x.MatchedUserId.Equals(ObjectId.Parse(user)) && x.UserId.Equals(ObjectId.Parse(matchUser))));
+                var query = _dataContext.Matches.Where(x => x.State == (int)MatchStateEnum.approved && x.Status == (int)StatusEnum.enable && (x.UserId.Equals(user) && x.MatchedUserId.Equals(matchUser) || x.MatchedUserId.Equals(user) && x.UserId.Equals(matchUser)));
 
                 var _result = await query.FirstOrDefaultAsync();
 
@@ -39,12 +39,12 @@ namespace API.Services
             }
         }
 
-        public async Task<AppChat?> SendMessage(SendMessageDto data, string userId) {
+        public async Task<AppChat?> SendMessage(SendMessageDto data, int userId) {
             try
             {
                 var newChat = _mapper.Map<AppChat>(data);
                 newChat.MessageType = (int)EnumMessageType.text;
-                newChat.Sender = ObjectId.Parse(userId);
+                newChat.Sender = userId;
 
                 _dataContext.Add(newChat);
                 await _dataContext.SaveChangesAsync();
@@ -57,13 +57,13 @@ namespace API.Services
             }
         }
 
-        public async Task<ResultPaginate<MessageResultDto>?> GetMessages(string sender, string receiver, int skip = 0, int limit = 50, string sort = "desc") {
+        public async Task<ResultPaginate<MessageResultDto>?> GetMessages(int sender, int receiver, int skip = 0, int limit = 50, string sort = "desc") {
             try
             {
                 var query = _dataContext.Chats.Where(
                     m => m.Status == (int)StatusEnum.enable 
                     && (
-                        (m.Sender.ToString() == sender && m.Receiver.ToString() == receiver) || (m.Receiver.ToString() == sender && m.Sender.ToString() == receiver)
+                        (m.Sender == sender && m.Receiver == receiver) || (m.Receiver == sender && m.Sender == receiver)
                     )
                 );
 

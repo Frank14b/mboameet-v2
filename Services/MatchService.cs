@@ -34,11 +34,11 @@ public class MatchService : IMatchService
         _userService = userService;
     }
 
-    public async Task<BooleanReturnDto> CheckIfUserIsMatch(string user, string matchUser)
+    public async Task<BooleanReturnDto> CheckIfUserIsMatch(int user, int matchUser)
     {
         try
         {
-            var query = _dataContext.Matches.Where(x => x.State == (int)MatchStateEnum.approved && x.Status == (int)StatusEnum.enable && (x.UserId.Equals(ObjectId.Parse(user)) && x.MatchedUserId.Equals(ObjectId.Parse(matchUser)) || x.MatchedUserId.Equals(ObjectId.Parse(user)) && x.UserId.Equals(ObjectId.Parse(matchUser))));
+            var query = _dataContext.Matches.Where(x => x.State == (int)MatchStateEnum.approved && x.Status == (int)StatusEnum.enable && (x.UserId.Equals(user) && x.MatchedUserId.Equals(matchUser) || x.MatchedUserId.Equals(user) && x.UserId.Equals(matchUser)));
 
             var _result = await query.FirstOrDefaultAsync();
 
@@ -62,11 +62,11 @@ public class MatchService : IMatchService
         }
     }
 
-    public async Task<BooleanReturnDto> CheckIfMatchRequestExist(string user, string matchUser)
+    public async Task<BooleanReturnDto> CheckIfMatchRequestExist(int user, int matchUser)
     {
         try
         {
-            var query = _dataContext.Matches.Where(x => x.Status == (int)StatusEnum.enable && (x.UserId.Equals(ObjectId.Parse(user)) && x.MatchedUserId.Equals(ObjectId.Parse(matchUser)) || x.MatchedUserId.Equals(ObjectId.Parse(user)) && x.UserId.Equals(ObjectId.Parse(matchUser))));
+            var query = _dataContext.Matches.Where(x => x.Status == (int)StatusEnum.enable && (x.UserId.Equals(user) && x.MatchedUserId.Equals(matchUser) || x.MatchedUserId.Equals(user) && x.UserId.Equals(matchUser)));
 
             var _result = await query.CountAsync();
 
@@ -90,7 +90,7 @@ public class MatchService : IMatchService
         }
     }
 
-    public async Task<BooleanReturnDto> CheckIfUserSendMatchRequest(string user, string matchUser, int type = (int)MatchStateEnum.inititated)
+    public async Task<BooleanReturnDto> CheckIfUserSendMatchRequest(int user, int matchUser, int type = (int)MatchStateEnum.inititated)
     {
         try
         {
@@ -126,11 +126,11 @@ public class MatchService : IMatchService
         }
     }
 
-    public async Task<BooleanReturnDto> CheckIfUserReceivedMatchRequest(string user, string matchUser, int type = (int)MatchStateEnum.inititated)
+    public async Task<BooleanReturnDto> CheckIfUserReceivedMatchRequest(int user, int matchUser, int type = (int)MatchStateEnum.inititated)
     {
         try
         {
-            var query = _dataContext.Matches.Where(x => x.Status == (int)StatusEnum.enable && x.MatchedUserId.Equals(ObjectId.Parse(user)) && x.UserId.Equals(ObjectId.Parse(matchUser)));
+            var query = _dataContext.Matches.Where(x => x.Status == (int)StatusEnum.enable && x.MatchedUserId.Equals(user) && x.UserId.Equals(matchUser));
 
             var _result = await query.FirstOrDefaultAsync();
 
@@ -162,40 +162,40 @@ public class MatchService : IMatchService
         }
     }
 
-    public async Task<AppMatch?> GetUserMatchSendRequest(string userId, string? id = null)
+    public async Task<AppMatch?> GetUserMatchSendRequest(int userId, int? id = null)
     {
         if (id != null)
         {
-            AppMatch? match = await _dataContext.Matches.FirstOrDefaultAsync(m => m.UserId.ToString() == userId && m.Status == (int)StatusEnum.enable && m.State == (int)MatchStateEnum.inititated && m.Id.ToString() == id);
+            AppMatch? match = await _dataContext.Matches.FirstOrDefaultAsync(m => m.UserId == userId && m.Status == (int)StatusEnum.enable && m.State == (int)MatchStateEnum.inititated && m.Id == id);
             return match;
         }
         else
         {
-            AppMatch? match = await _dataContext.Matches.FirstOrDefaultAsync(m => m.UserId.ToString() == userId && m.Status == (int)StatusEnum.enable && m.State == (int)MatchStateEnum.inititated);
+            AppMatch? match = await _dataContext.Matches.FirstOrDefaultAsync(m => m.UserId == userId && m.Status == (int)StatusEnum.enable && m.State == (int)MatchStateEnum.inititated);
             return match;
         }
 
     }
 
-    public async Task<AppMatch?> GetUserMatchReceivedRequest(string userId, string? id = null)
+    public async Task<AppMatch?> GetUserMatchReceivedRequest(int userId, int? id = null)
     {
         if (id != null)
         {
-            AppMatch? match = await _dataContext.Matches.FirstOrDefaultAsync(m => m.MatchedUserId.ToString() == userId && m.Status == (int)StatusEnum.enable && m.State == (int)MatchStateEnum.inititated && m.Id.ToString() == id);
+            AppMatch? match = await _dataContext.Matches.FirstOrDefaultAsync(m => m.MatchedUserId == userId && m.Status == (int)StatusEnum.enable && m.State == (int)MatchStateEnum.inititated && m.Id == id);
             return match;
         }
         else
         {
-            AppMatch? match = await _dataContext.Matches.FirstOrDefaultAsync(m => m.MatchedUserId.ToString() == userId && m.Status == (int)StatusEnum.enable && m.State == (int)MatchStateEnum.inititated);
+            AppMatch? match = await _dataContext.Matches.FirstOrDefaultAsync(m => m.MatchedUserId == userId && m.Status == (int)StatusEnum.enable && m.State == (int)MatchStateEnum.inititated);
             return match;
         }
     }
 
-    public async Task<BooleanReturnDto> DeleteUserMatchRequest(string userId, string id)
+    public async Task<BooleanReturnDto> DeleteUserMatchRequest(int userId, int id)
     {
         try
         {
-            AppMatch? match = await _dataContext.Matches.FirstOrDefaultAsync(m => m.UserId.ToString() == userId && m.Id.ToString() == id && m.Status == (int)StatusEnum.enable && m.State == (int)MatchStateEnum.inititated);
+            AppMatch? match = await _dataContext.Matches.FirstOrDefaultAsync(m => m.UserId == userId && m.Id == id && m.Status == (int)StatusEnum.enable && m.State == (int)MatchStateEnum.inititated);
             if (match == null)
             {
                 return new BooleanReturnDto
@@ -225,7 +225,7 @@ public class MatchService : IMatchService
         }
     }
 
-    public async Task<BooleanReturnDto> ReplyMatchRequest(string userId, string action, string id)
+    public async Task<BooleanReturnDto> ReplyMatchRequest(int userId, string action, int id)
     {
         try
         {
@@ -259,7 +259,7 @@ public class MatchService : IMatchService
         }
     }
 
-    public async Task<BooleanReturnDto> CancelMatchRequest(string userId, string id)
+    public async Task<BooleanReturnDto> CancelMatchRequest(int userId, int id)
     {
         try
         {
@@ -291,7 +291,7 @@ public class MatchService : IMatchService
         }
     }
 
-    public async Task<MatchesResultDto?> CreateUserMatch(string userId, AddMatchDto data)
+    public async Task<MatchesResultDto?> CreateUserMatch(int userId, AddMatchDto data)
     {
         try
         {
@@ -312,8 +312,8 @@ public class MatchService : IMatchService
 
             var newMatch = new AppMatch
             {
-                MatchedUserId = ObjectId.Parse(data.MatchedUserId),
-                UserId = ObjectId.Parse(userId),
+                MatchedUserId = data.MatchedUserId,
+                UserId = userId,
             };
 
             _dataContext.Add(newMatch);
@@ -328,7 +328,7 @@ public class MatchService : IMatchService
         }
     }
 
-    public async Task<ResultPaginate<MatchesResultDto>?> GetUserMatches(string userId, int skip = 0, int limit = 50, string sort = "desc")
+    public async Task<ResultPaginate<MatchesResultDto>?> GetUserMatches(int userId, int skip = 0, int limit = 50, string sort = "desc")
     {
         try
         {
@@ -343,7 +343,7 @@ public class MatchService : IMatchService
             }
 
             //////
-            var query = _dataContext.Matches.Where(m => m.Status == (int)StatusEnum.enable && m.State == (int)MatchStateEnum.approved && (m.UserId.ToString() == userId || m.MatchedUserId.ToString() == userId));
+            var query = _dataContext.Matches.Where(m => m.Status == (int)StatusEnum.enable && m.State == (int)MatchStateEnum.approved && (m.UserId == userId || m.MatchedUserId == userId));
 
             // Apply sorting directly in the query
             query = sort == "desc"
@@ -356,8 +356,8 @@ public class MatchService : IMatchService
 
             foreach (var match in matches)
             {
-                match.User = await _userService.GetUserById(match.UserId.ToString());
-                match.MatchedUser = await _userService.GetUserById(match.MatchedUserId.ToString());
+                match.User = await _userService.GetUserById(match.UserId);
+                match.MatchedUser = await _userService.GetUserById(match.MatchedUserId);
             }
 
             var result = _mapper.Map<IEnumerable<MatchesResultDto>>(matches);

@@ -15,7 +15,7 @@ public class FeedController: BaseApiController {
 
     [HttpPost("")]
     public async Task<ActionResult<FeedResultDto>> AddFeed (CreateFeedDto data) {
-         string userId = _userService.GetConnectedUser(User);
+         int userId = _userService.GetConnectedUser(User);
          AppFeed? feed = await _feedService.CreateNewFeed(data, userId);
 
          if(feed is null) return BadRequest("Couldn't create the feed. please retry later");

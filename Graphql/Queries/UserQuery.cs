@@ -20,7 +20,7 @@ public class UserQuery : ObjectGraphType
         _userService = userService;
         _mapper = mapper;
 
-        var Id = new QueryArgument<StringGraphType> { Name = "id", Description = "User object id" };
+        var Id = new QueryArgument<IntGraphType> { Name = "id", Description = "User unique id" };
         var Keyword = new QueryArgument<StringGraphType> { Name = "keyword", Description = "User email, name, ..." };
 
         Field<ListGraphType<UserType>>("users").ResolveAsync(async ctx =>
@@ -39,7 +39,7 @@ public class UserQuery : ObjectGraphType
         Field<UserType>("user").Arguments(new QueryArguments(FindUserDto.Id, FindUserDto.Keyword))
         .ResolveAsync(async ctx =>
         {
-            return await ResultUser(ctx.GetArgument<string>("id"));
+            return await ResultUser(ctx.GetArgument<int>("id"));
         });
 
         async Task<List<ResultUserDto>> ResultUserList()
@@ -48,7 +48,7 @@ public class UserQuery : ObjectGraphType
             return _mapper.Map<List<ResultUserDto>>(users);
         }
 
-        async Task<ResultUserDto> ResultUser(string id)
+        async Task<ResultUserDto> ResultUser(int id)
         {
             AppUser? user = await _userService.GetUserById(id);
             return _mapper.Map<ResultUserDto>(user);

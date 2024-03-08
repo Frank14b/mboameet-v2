@@ -16,12 +16,12 @@ public class FeedService: IFeedService {
         _logger = logger;
     }
 
-    public async Task<AppFeed?> CreateNewFeed(CreateFeedDto data, string userId) {
+    public async Task<AppFeed?> CreateNewFeed(CreateFeedDto data, int userId) {
         try
         {
             AppFeed feed = new() {
                 Message = data?.Message,
-                UserId = ObjectId.Parse(userId),
+                UserId = userId,
                 VideoLink = data?.VideoLink,
             };
 

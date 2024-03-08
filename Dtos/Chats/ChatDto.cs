@@ -10,14 +10,14 @@ namespace API.DTOs
         [EnumDataType(typeof(EnumMessageType))]
         public required int MessageType { get; set; }
 
-        public required string Receiver { get; set; }
+        public required int Receiver { get; set; }
 
         public List<string>? Files { get; set; }
     }
 
     public class MessageResultDto
     {
-        public required string Id { get; set; }
+        public required int Id { get; set; }
 
         [Required]
         public required string Message { get; set; }
@@ -32,9 +32,9 @@ namespace API.DTOs
         [EnumDataType(typeof(StatusEnum))]
         public int Status { get; set; }
 
-        public required string Sender { get; set; }
+        public required int Sender { get; set; }
 
-        public required string Receiver { get; set; }
+        public required int Receiver { get; set; }
 
         public List<string>? Files { get; set; }
     }

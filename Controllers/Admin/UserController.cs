@@ -34,8 +34,8 @@ namespace API.Controllers.Admin
                 using var hmac = new HMACSHA512();
 
                 var newUser = _mapper.Map<AppUser>(data);
-                newUser.PasswordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(AppHelper.GenerateRandomString(0)));
-                newUser.PasswordSalt = hmac.Key;
+                // newUser.PasswordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(AppHelper.GenerateRandomString(0)));
+                // newUser.PasswordSalt = hmac.Key;
                 newUser.Status = (int)StatusEnum.enable;
                 newUser.Age = 18;
                 newUser.Role = (int)RoleEnum.user;

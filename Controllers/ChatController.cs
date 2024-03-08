@@ -34,7 +34,7 @@ namespace API.Controllers
         {
             try
             {
-                string id = _userService.GetConnectedUser(User);
+                int id = _userService.GetConnectedUser(User);
 
                 // if (!(await _matchService.CheckIfUserIsMatch(id, data.Receiver.ToString())).Status) return BadRequest("You must be matching with this user to send a message");
 
@@ -51,11 +51,11 @@ namespace API.Controllers
         }
 
         [HttpGet("{userId}")]
-        public async Task<ActionResult<ResultPaginate<MessageResultDto>>> GetMessages(string userId, int skip = 0, int limit = 50, string sort = "desc")
+        public async Task<ActionResult<ResultPaginate<MessageResultDto>>> GetMessages(int userId, int skip = 0, int limit = 50, string sort = "desc")
         {
             try
             {
-                string id = _userService.GetConnectedUser(User);
+                int id = _userService.GetConnectedUser(User);
 
                 var data = await _chatService.GetMessages(id, userId, skip, limit, sort);
 

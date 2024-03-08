@@ -49,21 +49,22 @@ builder.Services.AddSwaggerGen(c =>
         // c.OperationFilter<SwaggerAuthorizeOperationFilter>();
     });
 
-string? connectionString = builder.Configuration["MONGODB_URI"];
+string? connectionString = builder.Configuration.GetConnectionString("SQL_SERVER_MBOAMEET");
 
 if (connectionString == null)
 {
-    Console.WriteLine("You must set your 'MONGODB_URI' environment variable.");
+    Console.WriteLine("You must set your 'SQL_SERVER_MBOAMEET' environment variable.");
     Environment.Exit(0);
 }
 
-var client = new MongoClient(connectionString); // mongo db client initiate connection
+// var client = new MongoClient(connectionString); // mongo db client initiate connection
 
-var db = client.GetDatabase("mboameet-v2");
+// var db = client.GetDatabase("mboameet-v2");
 
 builder.Services.AddDbContext<DataContext>(opt =>
 {
-    opt.UseMongoDB(db.Client, db.DatabaseNamespace.DatabaseName);
+    opt.UseSqlServer(connectionString);
+    // opt.UseMongoDB(db.Client, db.DatabaseNamespace.DatabaseName);
 });
 
 // ConnectionMultiplexer redis = ConnectionMultiplexer.Connect("localhost");  // redis client initiate connection

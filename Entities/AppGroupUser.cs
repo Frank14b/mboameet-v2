@@ -9,8 +9,7 @@ namespace API.Entities;
 [Table("groupusers")]
 public class AppGroupUser
 {
-    [BsonId]
-    public ObjectId Id { get; set; }
+    public int Id { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
@@ -19,12 +18,9 @@ public class AppGroupUser
     [EnumDataType(typeof(StatusEnum))]
     public int Status { get; set; }
 
-    [BsonId]
-    public ObjectId UserId { get; set; }
+    public int UserId { get; set; }
 
-    [BsonId]
-    public ObjectId GroupId { get; set; }
+    public int GroupId { get; set; }
 
-    [BsonId]
-    public ObjectId GroupAccesId { get; set; }
+    public int GroupAccesId { get; set; }
 }

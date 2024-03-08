@@ -1,7 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using API.DTOs;
-using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 
 namespace API.Entities;
@@ -9,8 +8,7 @@ namespace API.Entities;
 [Table("chats")]
 public class AppChat
 {
-    [BsonId]
-    public ObjectId Id { get; set; }
+    public int Id { get; set; }
 
     [Required]
     public required string Message { get; set; }
@@ -25,11 +23,9 @@ public class AppChat
     [EnumDataType(typeof(StatusEnum))]
     public int Status { get; set; }
 
-    [BsonId]
-    public ObjectId Sender { get; set; }
+    public int Sender { get; set; }
 
-    [BsonId]
-    public ObjectId Receiver { get; set; }
+    public int Receiver { get; set; }
 
-    public List<string>? Files { get; set; }
+    // public List<string>? Files { get; set; }
 }

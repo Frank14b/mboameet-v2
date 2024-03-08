@@ -1,18 +1,15 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using API.DTOs;
-using MongoDB.Bson;
-using MongoDB.Bson.Serialization.Attributes;
 
 namespace API.Entities;
 
 [Table("authtokens")]
 public class AppAuthToken
 {
-    [BsonId]
-    public ObjectId Id { get; set; }
+    public int Id { get; set; }
 
-    public ObjectId? UserId { get; set; }
+    public int? UserId { get; set; }
 
     public required string Email { get; set; }
 

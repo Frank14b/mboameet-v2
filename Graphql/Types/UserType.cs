@@ -20,7 +20,7 @@ public class UserType : ObjectGraphType<ResultUserDto>
 
 public class FindUserDto
 {
-    public static QueryArgument<StringGraphType> Id { get; set; } = new QueryArgument<StringGraphType> { Name = "id", Description = "User object id" };
+    public static QueryArgument<IntGraphType> Id { get; set; } = new QueryArgument<IntGraphType> { Name = "id", Description = "User object id" };
 
     public static QueryArgument<StringGraphType> Keyword { get; set; } = new QueryArgument<StringGraphType> { Name = "keyword", Description = "User email, name, ..." };
 }

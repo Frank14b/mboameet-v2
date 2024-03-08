@@ -9,8 +9,7 @@ namespace API.Entities;
 [Table("groupchats")]
 public class AppGroupChat
 {
-    [BsonId]
-    public ObjectId Id { get; set; }
+    public int Id { get; set; }
 
     [Required]
     public required string Message { get; set; }
@@ -25,11 +24,9 @@ public class AppGroupChat
     [EnumDataType(typeof(StatusEnum))]
     public int Status { get; set; }
 
-    [BsonId]
-    public ObjectId Sender { get; set; }
+    public int UserId { get; set; }
 
-    [BsonId]
-    public ObjectId GroupId { get; set; }
+    public int GroupId { get; set; }
 
-    public List<string>? Files { get; set; }
+    // public List<string>? Files { get; set; }
 }
