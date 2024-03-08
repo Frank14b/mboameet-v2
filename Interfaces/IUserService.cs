@@ -21,7 +21,7 @@ public interface IUserService
     Task<List<AppUser>> GetUsers();
     bool IsValidPassword(string password);
     Task<bool> CheckGoogleAuthToken(string token = "", string urlHost = "");
-    bool UserPasswordIsValid(byte[] passwordSalt, byte[] passwordHash, string password);
+    bool UserPasswordIsValid(string passwordSalt, string passwordHash, string password);
     Task<AppUser?> CreateUserAccount(RegisterDto? data);
     Task<AppUser?> AuthenticateUser(LoginDto data);
     Task<BooleanReturnDto?> DeleteUserAccount(DeleteProfile data, int userId);

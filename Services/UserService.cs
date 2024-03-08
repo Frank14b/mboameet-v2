@@ -173,8 +173,8 @@ public class UserService : IUserService
 
         return new()
         {
-            PasswordHash = PasswordHash,
-            PasswordSalt = PasswordSalt
+            PasswordHash = Convert.ToBase64String(PasswordHash),
+            PasswordSalt = Convert.ToBase64String(PasswordSalt)
         };
     }
 
@@ -208,18 +208,7 @@ public class UserService : IUserService
     {
         try
         {
-            var result = await _dataContext.Users.Select(u => new AppUser
-            {
-                Id = u.Id,
-                UserName = u.UserName,
-                FirstName = u.FirstName,
-                LastName = u.LastName,
-                Status = u.Status,
-                Email = u.Email,
-                PasswordHash = u.PasswordHash,
-                PasswordSalt = u.PasswordSalt,
-                Photo = null
-            }).Where(x => x.Status == (int)StatusEnum.enable && x.Id == id).FirstAsync();
+            var result = await _dataContext.Users.Where(x => x.Status == (int)StatusEnum.enable && x.Id == id).FirstAsync();
 
             return result;
         }
@@ -244,39 +233,14 @@ public class UserService : IUserService
         return test;
     }
 
-    public byte[] ConvertHexToByte(string hexString)
+    public bool UserPasswordIsValid(string passwordSalt, string passwordHash, string password)
     {
-        string[] byteStringArray = hexString.Split('-');
-
-        // Create a byte array to store the converted values
-        byte[] byteArray = new byte[byteStringArray.Length];
-
-        // Convert each substring to a byte and store it in the array
-        for (int i = 0; i < byteStringArray.Length; i++)
-        {
-            byteArray[i] = Convert.ToByte(byteStringArray[i], 16);
-        }
-
-        return byteArray;
-    }
-
-    public bool UserPasswordIsValid(byte[] passwordSalt, byte[] passwordHash, string password)
-    {
-        using var hmac = new HMACSHA512(passwordSalt);
+        using var hmac = new HMACSHA512(Convert.FromBase64String(passwordSalt));
         var computedHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(password));
 
-        Console.WriteLine(passwordSalt[0]);
-        Console.WriteLine(computedHash[1]);
+        if(passwordHash.Equals(Convert.ToBase64String(computedHash))) return true; 
 
-        // Console.WriteLine(ConvertHexToByte(passwordSalt)[0]);
-        // Console.WriteLine(ConvertHexToByte(passwordSalt)[1]);
-
-        for (int i = 0; i < computedHash.Length; i++)
-        {
-            if (computedHash[i] != passwordHash[i]) return false;
-        }
-
-        return true;
+        return false;
     }
 
     public async Task<bool> CheckGoogleAuthToken(string token = "", string urlHost = "")
@@ -522,6 +486,7 @@ public class UserService : IUserService
             {
                 user.Photo = fileUrl;
 
+                _dataContext.Update(user);
                 await _dataContext.SaveChangesAsync();
                 return _mapper.Map<ResultUserDto>(user);
             }

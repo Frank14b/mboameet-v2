@@ -24,11 +24,18 @@ public class DataContext : DbContext
 
     public DbSet<AppGroupeAcces> GroupeAcces { get; set; }
 
+    public DbSet<AppFeed> Feeds {get; set;}
+
+    public DbSet<AppFeedComment> FeedComments {get; set;}
+
+    public DbSet<AppFeedFiles> FeedFiles {get; set;}
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<AppUser>().ToCollection("users")
             .HasMany(b => b.Match)
             .WithOne(p => p.MatchedUser)
-            .HasForeignKey(p => p.Id);
+            .HasForeignKey(p => p.Id)
+            .OnDelete(DeleteBehavior.NoAction);
     }
 }

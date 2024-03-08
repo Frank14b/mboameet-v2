@@ -4,12 +4,12 @@ using API.DTOs;
  
 namespace API.Entities;
 
-[Table("feeds")]
-public class AppFeed
+[Table("feedcomments")]
+public class AppFeedComment
 {
     public int Id { get; set; }
 
-    public string? Message { get; set; }
+    public string? Content { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
@@ -20,7 +20,5 @@ public class AppFeed
     
     public int UserId { get; set; }
 
-    public ICollection<AppFeedComment>? FeedComments {get; set;}
-
-    public ICollection<AppFeedFiles>? FeedFiles { get; set; }
+    public int FeedId { get; set; }
 }

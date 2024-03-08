@@ -22,7 +22,6 @@ public class FeedService: IFeedService {
             AppFeed feed = new() {
                 Message = data?.Message,
                 UserId = userId,
-                VideoLink = data?.VideoLink,
             };
 
             await _context.SaveChangesAsync();

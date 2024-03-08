@@ -24,9 +24,9 @@ namespace API.Entities
         [EmailAddress]
         public required string Email { get; set; }
 
-        public required byte[] PasswordHash { get; set; }
+        public required string PasswordHash { get; set; }
 
-        public required byte[] PasswordSalt { get; set; }
+        public required string PasswordSalt { get; set; }
 
         [EnumDataType(typeof(RoleEnum))]
         public int Role { get; set; }
@@ -34,6 +34,8 @@ namespace API.Entities
         public int Age { get; set; }
 
         public ICollection<AppMatch>? Match { get; set; }
+
+        public ICollection<AppFeed>? Feeds { get; set; }
 
         public DateTime LastLogin { get; set; }
 

@@ -22,23 +22,23 @@ public class UserSeeder
             {
                 using var hmac = new HMACSHA512();
 
-                var user = new AppUser
-                {
-                    UserName = "frank",
-                    PasswordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes("33@Elrangers")),
-                    PasswordSalt = hmac.Key,
-                    FirstName = "Frank",
-                    LastName = "Fontcha",
-                    Email = "franckfontcha@gmail.com",
-                    Role = (int)RoleEnum.user,
-                    Status = (int)StatusEnum.enable,
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow,
-                };
+                // var user = new AppUser
+                // {
+                //     UserName = "frank",
+                //     PasswordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes("33@Elrangers")),
+                //     PasswordSalt = hmac.Key,
+                //     FirstName = "Frank",
+                //     LastName = "Fontcha",
+                //     Email = "franckfontcha@gmail.com",
+                //     Role = (int)RoleEnum.user,
+                //     Status = (int)StatusEnum.enable,
+                //     CreatedAt = DateTime.UtcNow,
+                //     UpdatedAt = DateTime.UtcNow,
+                // };
 
-                _context.Users.Add(user);
+                // _context.Users.Add(user);
 
-                _context.SaveChanges();
+                // _context.SaveChanges();
             }
         }
         catch (Exception)
