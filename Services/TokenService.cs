@@ -51,7 +51,7 @@ namespace API.Services
             return tokenHandler.WriteToken(token);
         }
 
-        public string CreateAdminToken(AppUser user)
+        public string CreateAdminToken(User user)
         {
             var user_id = user.Id;
             var role_id = user.Role;

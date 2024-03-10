@@ -7,6 +7,6 @@ namespace API.Interfaces
     {
         string CreateToken(int Id, int Role, bool authToken);
 
-        string CreateAdminToken(AppUser user);
+        string CreateAdminToken(User user);
     }
 }

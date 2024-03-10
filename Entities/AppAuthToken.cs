@@ -5,7 +5,7 @@ using API.DTOs;
 namespace API.Entities;
 
 [Table("authtokens")]
-public class AppAuthToken
+public class AuthToken
 {
     public int Id { get; set; }
 

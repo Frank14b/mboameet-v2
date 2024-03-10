@@ -38,7 +38,7 @@ public class GroupChatController : BaseApiController
 
             if (!(await _matchService.CheckIfUserIsMatch(id, data.Receiver)).Status) return BadRequest("You must be matching with this user to send a message");
 
-            var newChat = _mapper.Map<AppChat>(data);
+            var newChat = _mapper.Map<Chat>(data);
             newChat.MessageType = (int)EnumMessageType.text;
             newChat.Sender = id;
 

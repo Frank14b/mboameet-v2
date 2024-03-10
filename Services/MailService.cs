@@ -84,7 +84,7 @@ namespace API.Services
             return mailTemplate;
         }
 
-        public string UserLoginBody(AppUser? data)
+        public string UserLoginBody(User? data)
         {
             string body = "<div> <p>Dear " + data?.UserName + ",</p><br/>"
                            + "<p>We are pleased to inform you that you have successfully logged in to your account on " + DateTime.UtcNow
@@ -97,7 +97,7 @@ namespace API.Services
             return body;
         }
 
-        public string UserRegisterBody(AppUser? data)
+        public string UserRegisterBody(User? data)
         {
             string body = "<div> <p>Dear " + data?.FirstName + ",</p><br/>"
                            + "<p>Thank you for signing up for our services! We are thrilled to have you as a part of our community. Your account has been successfully created the " + DateTime.UtcNow
@@ -124,7 +124,7 @@ namespace API.Services
             return body;
         }
 
-        public string ChangePasswordBody(AppUser? data)
+        public string ChangePasswordBody(User? data)
         {
             string body = "<div> <p>Dear " + data?.UserName + ",</p><br/>"
                            + "<p>A request to change your password has been completed in to your account on " + DateTime.UtcNow
@@ -138,7 +138,7 @@ namespace API.Services
             return body;
         }
 
-        public string DeleteAccountBody(AppUser? data)
+        public string DeleteAccountBody(User? data)
         {
             string body = "<div> <p>Dear " + data?.UserName + ",</p><br/>"
                            + "<p>A request to delete your acount has been received the " + DateTime.UtcNow

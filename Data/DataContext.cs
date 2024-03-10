@@ -8,31 +8,31 @@ public class DataContext : DbContext
 {
     public DataContext(DbContextOptions options) : base(options) { }
 
-    public DbSet<AppUser> Users { get; set; }
+    public DbSet<User> Users { get; set; }
 
-    public DbSet<AppChat> Chats { get; set; }
+    public DbSet<Chat> Chats { get; set; }
 
-    public DbSet<AppMatch> Matches { get; set; }
+    public DbSet<Match> Matches { get; set; }
 
-    public DbSet<AppAuthToken> AuthTokens { get; set; }
+    public DbSet<AuthToken> AuthTokens { get; set; }
 
-    public DbSet<AppGroup> Groups { get; set; }
+    public DbSet<Group> Groups { get; set; }
 
-    public DbSet<AppGroupChat> GroupChats { get; set; }
+    public DbSet<GroupChat> GroupChats { get; set; }
 
-    public DbSet<AppGroupUser> GroupUsers { get; set; }
+    public DbSet<GroupUser> GroupUsers { get; set; }
 
-    public DbSet<AppGroupeAcces> GroupeAcces { get; set; }
+    public DbSet<GroupeAcces> GroupeAcces { get; set; }
 
-    public DbSet<AppFeed> Feeds {get; set;}
+    public DbSet<Feed> Feeds {get; set;}
 
-    public DbSet<AppFeedComment> FeedComments {get; set;}
+    public DbSet<FeedComment> FeedComments {get; set;}
 
-    public DbSet<AppFeedFiles> FeedFiles {get; set;}
+    public DbSet<FeedFiles> FeedFiles {get; set;}
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<AppUser>().ToCollection("users")
+        modelBuilder.Entity<User>().ToCollection("users")
             .HasMany(b => b.Match)
             .WithOne(p => p.MatchedUser)
             .HasForeignKey(p => p.Id)

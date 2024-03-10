@@ -6,7 +6,7 @@ using MongoDB.Bson.Serialization.Attributes;
 namespace API.Entities;
 
 [Table("chats")]
-public class AppChat
+public class Chat
 {
     public int Id { get; set; }
 
@@ -26,6 +26,4 @@ public class AppChat
     public int Sender { get; set; }
 
     public int Receiver { get; set; }
-
-    // public List<string>? Files { get; set; }
 }

@@ -8,14 +8,14 @@ namespace API.Helpers
     {
         public AutoMapperProfiles()
         {
-            CreateMap<AppUser, ResultUpdateUserDto>();
-            CreateMap<AppUser, ResultUserDto>();
-            CreateMap<AppUser, ResultloginDto>();
-            CreateMap<AppChat, MessageResultDto>();
-            CreateMap<SendMessageDto, AppChat>();
-            // CreateMap<AddMatchDto, AppMatch>();
-            CreateMap<AppMatch, MatchesResultDto>();
-            CreateMap<CreateUserDto, AppUser>();
+            CreateMap<User, ResultUpdateUserDto>();
+            CreateMap<User, ResultUserDto>();
+            CreateMap<User, ResultloginDto>();
+            CreateMap<Chat, MessageResultDto>();
+            CreateMap<SendMessageDto, Chat>();
+            // CreateMap<AddMatchDto, Match>();
+            CreateMap<Match, MatchesResultDto>();
+            CreateMap<CreateUserDto, User>();
             // CreateMap<AppRole, RoleResultDtos>();
             // CreateMap<DeleteRolesDto, AppRole>();
             // CreateMap<DeleteAccessDto, AppAcces>();
@@ -32,8 +32,8 @@ namespace API.Helpers
             // CreateMap<AppProperty, PropertiesResultListDto>();
             // CreateMap<PropertyTUpdateDto, AppPropertyType>();
             // CreateMap<PropertiesCreateDto, AppProperty>();
-            // CreateMap<AppUserBusines, UserBusinessResultDto>();
-            // CreateMap<UserBusinessDto, AppUserBusines>();
+            // CreateMap<UserBusines, UserBusinessResultDto>();
+            // CreateMap<UserBusinessDto, UserBusines>();
         }
     }
 }

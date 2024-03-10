@@ -7,7 +7,7 @@ using MongoDB.Bson.Serialization.Attributes;
 namespace API.Entities;
 
 [Table("groups")]
-public class AppGroup
+public class Group
 {
     public int Id { get; set; }
 
@@ -27,6 +27,4 @@ public class AppGroup
 
     [Required]
     public required int UserId { get; set; }
-
-    // public List<string>? Files { get; set; }
 }

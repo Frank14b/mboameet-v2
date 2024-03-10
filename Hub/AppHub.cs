@@ -47,7 +47,7 @@ public class AppHub : Hub
         var cachedValue = _redisCache.GetString("SocketClients");
         Console.WriteLine("cachedValue === " + cachedValue);
 
-        AppUser? userData = await _userService.GetUserById(int.Parse(userId));
+        User? userData = await _userService.GetUserById(int.Parse(userId));
         await Clients.Caller.SendAsync("UserProfile", _mapper.Map<ResultUserDto>(userData));
     }
 }

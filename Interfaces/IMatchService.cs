@@ -9,8 +9,8 @@ namespace API.Interfaces
         Task<BooleanReturnDto> CheckIfUserReceivedMatchRequest(int user, int matchUser, int type);
         Task<BooleanReturnDto> CheckIfUserSendMatchRequest(int user, int matchUser, int type);
         Task<BooleanReturnDto> CheckIfMatchRequestExist(int user, int matchUser);
-        Task<AppMatch?> GetUserMatchSendRequest(int userId, int? id);
-        Task<AppMatch?> GetUserMatchReceivedRequest(int userId, int? id);
+        Task<Match?> GetUserMatchSendRequest(int userId, int? id);
+        Task<Match?> GetUserMatchReceivedRequest(int userId, int? id);
         Task<BooleanReturnDto> DeleteUserMatchRequest(int userId, int id);
         Task<BooleanReturnDto> ReplyMatchRequest(int userId, string action, int id);
         Task<BooleanReturnDto> CancelMatchRequest(int userId, int id);

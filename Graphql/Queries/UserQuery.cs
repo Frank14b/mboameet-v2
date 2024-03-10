@@ -44,13 +44,13 @@ public class UserQuery : ObjectGraphType
 
         async Task<List<ResultUserDto>> ResultUserList()
         {
-            List<AppUser> users = await _userService.GetUsers();
+            List<User> users = await _userService.GetUsers();
             return _mapper.Map<List<ResultUserDto>>(users);
         }
 
         async Task<ResultUserDto> ResultUser(int id)
         {
-            AppUser? user = await _userService.GetUserById(id);
+            User? user = await _userService.GetUserById(id);
             return _mapper.Map<ResultUserDto>(user);
         }
     }

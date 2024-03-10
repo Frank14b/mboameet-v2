@@ -162,31 +162,31 @@ public class MatchService : IMatchService
         }
     }
 
-    public async Task<AppMatch?> GetUserMatchSendRequest(int userId, int? id = null)
+    public async Task<Match?> GetUserMatchSendRequest(int userId, int? id = null)
     {
         if (id != null)
         {
-            AppMatch? match = await _dataContext.Matches.FirstOrDefaultAsync(m => m.UserId == userId && m.Status == (int)StatusEnum.enable && m.State == (int)MatchStateEnum.inititated && m.Id == id);
+            Match? match = await _dataContext.Matches.FirstOrDefaultAsync(m => m.UserId == userId && m.Status == (int)StatusEnum.enable && m.State == (int)MatchStateEnum.inititated && m.Id == id);
             return match;
         }
         else
         {
-            AppMatch? match = await _dataContext.Matches.FirstOrDefaultAsync(m => m.UserId == userId && m.Status == (int)StatusEnum.enable && m.State == (int)MatchStateEnum.inititated);
+            Match? match = await _dataContext.Matches.FirstOrDefaultAsync(m => m.UserId == userId && m.Status == (int)StatusEnum.enable && m.State == (int)MatchStateEnum.inititated);
             return match;
         }
 
     }
 
-    public async Task<AppMatch?> GetUserMatchReceivedRequest(int userId, int? id = null)
+    public async Task<Match?> GetUserMatchReceivedRequest(int userId, int? id = null)
     {
         if (id != null)
         {
-            AppMatch? match = await _dataContext.Matches.FirstOrDefaultAsync(m => m.MatchedUserId == userId && m.Status == (int)StatusEnum.enable && m.State == (int)MatchStateEnum.inititated && m.Id == id);
+            Match? match = await _dataContext.Matches.FirstOrDefaultAsync(m => m.MatchedUserId == userId && m.Status == (int)StatusEnum.enable && m.State == (int)MatchStateEnum.inititated && m.Id == id);
             return match;
         }
         else
         {
-            AppMatch? match = await _dataContext.Matches.FirstOrDefaultAsync(m => m.MatchedUserId == userId && m.Status == (int)StatusEnum.enable && m.State == (int)MatchStateEnum.inititated);
+            Match? match = await _dataContext.Matches.FirstOrDefaultAsync(m => m.MatchedUserId == userId && m.Status == (int)StatusEnum.enable && m.State == (int)MatchStateEnum.inititated);
             return match;
         }
     }
@@ -195,7 +195,7 @@ public class MatchService : IMatchService
     {
         try
         {
-            AppMatch? match = await _dataContext.Matches.FirstOrDefaultAsync(m => m.UserId == userId && m.Id == id && m.Status == (int)StatusEnum.enable && m.State == (int)MatchStateEnum.inititated);
+            Match? match = await _dataContext.Matches.FirstOrDefaultAsync(m => m.UserId == userId && m.Id == id && m.Status == (int)StatusEnum.enable && m.State == (int)MatchStateEnum.inititated);
             if (match == null)
             {
                 return new BooleanReturnDto
@@ -301,7 +301,7 @@ public class MatchService : IMatchService
             {
                 if (receivedRequest?.Data != null)
                 {
-                    AppMatch currentRequest = receivedRequest.Data;
+                    Match currentRequest = receivedRequest.Data;
                     currentRequest.State = (int)MatchStateEnum.approved;
                     await _dataContext.SaveChangesAsync();
 
@@ -310,7 +310,7 @@ public class MatchService : IMatchService
                 }
             }
 
-            var newMatch = new AppMatch
+            var newMatch = new Match
             {
                 MatchedUserId = data.MatchedUserId,
                 UserId = userId,

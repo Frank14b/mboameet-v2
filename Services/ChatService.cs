@@ -39,10 +39,10 @@ namespace API.Services
             }
         }
 
-        public async Task<AppChat?> SendMessage(SendMessageDto data, int userId) {
+        public async Task<Chat?> SendMessage(SendMessageDto data, int userId) {
             try
             {
-                var newChat = _mapper.Map<AppChat>(data);
+                var newChat = _mapper.Map<Chat>(data);
                 newChat.MessageType = (int)EnumMessageType.text;
                 newChat.Sender = userId;
 
@@ -71,7 +71,7 @@ namespace API.Services
 
                 query = sort == "desc" ? query.OrderByDescending(x => x.CreatedAt) : query.OrderBy(x => x.CreatedAt);
 
-                List<AppChat>? data = await query.Skip(skip).Take(limit).ToListAsync();
+                List<Chat>? data = await query.Skip(skip).Take(limit).ToListAsync();
 
                 var result = _mapper.Map<IEnumerable<MessageResultDto>>(data);
 

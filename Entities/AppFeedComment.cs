@@ -5,7 +5,7 @@ using API.DTOs;
 namespace API.Entities;
 
 [Table("feedcomments")]
-public class AppFeedComment
+public class FeedComment
 {
     public int Id { get; set; }
 

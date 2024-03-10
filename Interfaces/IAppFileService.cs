@@ -1,7 +1,6 @@
-using Microsoft.AspNetCore.Mvc;
-
 namespace API.Interfaces;
 
 public interface IAppFileService {
-    Task<string?> UploadFile([FromForm] IFormFile file, string userId, string folder);
+    Task<string?> UploadFile(IFormFile file, int userId, string folder);
+    Task<List<string>?> UploadFiles(IFormFileCollection dataFiles, int userId, string folder);
 }

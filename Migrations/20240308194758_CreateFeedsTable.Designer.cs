@@ -25,7 +25,7 @@ namespace mboameet.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("API.Entities.AppAuthToken", b =>
+            modelBuilder.Entity("API.Entities.AuthToken", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -67,7 +67,7 @@ namespace mboameet.Migrations
                     b.ToTable("authtokens");
                 });
 
-            modelBuilder.Entity("API.Entities.AppChat", b =>
+            modelBuilder.Entity("API.Entities.Chat", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -102,7 +102,7 @@ namespace mboameet.Migrations
                     b.ToTable("chats");
                 });
 
-            modelBuilder.Entity("API.Entities.AppFeed", b =>
+            modelBuilder.Entity("API.Entities.Feed", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -110,7 +110,7 @@ namespace mboameet.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("AppUserId")
+                    b.Property<int?>("UserId")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("CreatedAt")
@@ -130,21 +130,18 @@ namespace mboameet.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AppUserId");
+                    b.HasIndex("UserId");
 
                     b.ToTable("feeds");
                 });
 
-            modelBuilder.Entity("API.Entities.AppFeedComment", b =>
+            modelBuilder.Entity("API.Entities.FeedComment", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int?>("AppFeedId")
-                        .HasColumnType("int");
 
                     b.Property<string>("Content")
                         .HasColumnType("nvarchar(max)");
@@ -166,21 +163,16 @@ namespace mboameet.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AppFeedId");
-
                     b.ToTable("feedcomments");
                 });
 
-            modelBuilder.Entity("API.Entities.AppFeedFiles", b =>
+            modelBuilder.Entity("API.Entities.FeedFiles", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int?>("AppFeedId")
-                        .HasColumnType("int");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
@@ -212,12 +204,12 @@ namespace mboameet.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AppFeedId");
+                    b.HasIndex("FeedId");
 
                     b.ToTable("feedfiles");
                 });
 
-            modelBuilder.Entity("API.Entities.AppGroup", b =>
+            modelBuilder.Entity("API.Entities.Group", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -253,7 +245,7 @@ namespace mboameet.Migrations
                     b.ToTable("groups");
                 });
 
-            modelBuilder.Entity("API.Entities.AppGroupChat", b =>
+            modelBuilder.Entity("API.Entities.GroupChat", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -288,7 +280,7 @@ namespace mboameet.Migrations
                     b.ToTable("groupchats");
                 });
 
-            modelBuilder.Entity("API.Entities.AppGroupUser", b =>
+            modelBuilder.Entity("API.Entities.GroupUser", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -319,7 +311,7 @@ namespace mboameet.Migrations
                     b.ToTable("groupusers");
                 });
 
-            modelBuilder.Entity("API.Entities.AppGroupeAcces", b =>
+            modelBuilder.Entity("API.Entities.GroupeAcces", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -349,7 +341,7 @@ namespace mboameet.Migrations
                     b.ToTable("groupaccess");
                 });
 
-            modelBuilder.Entity("API.Entities.AppMatch", b =>
+            modelBuilder.Entity("API.Entities.Match", b =>
                 {
                     b.Property<int>("Id")
                         .HasColumnType("int");
@@ -379,7 +371,7 @@ namespace mboameet.Migrations
                     b.ToTable("matches");
                 });
 
-            modelBuilder.Entity("API.Entities.AppUser", b =>
+            modelBuilder.Entity("API.Entities.User", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -443,36 +435,36 @@ namespace mboameet.Migrations
                     b.HasAnnotation("Mongo:CollectionName", "users");
                 });
 
-            modelBuilder.Entity("API.Entities.AppFeed", b =>
+            modelBuilder.Entity("API.Entities.Feed", b =>
                 {
-                    b.HasOne("API.Entities.AppUser", null)
+                    b.HasOne("API.Entities.User", null)
                         .WithMany("Feeds")
-                        .HasForeignKey("AppUserId");
+                        .HasForeignKey("UserId");
                 });
 
-            modelBuilder.Entity("API.Entities.AppFeedComment", b =>
+            modelBuilder.Entity("API.Entities.FeedComment", b =>
                 {
-                    b.HasOne("API.Entities.AppFeed", null)
+                    b.HasOne("API.Entities.Feed", null)
                         .WithMany("FeedComments")
-                        .HasForeignKey("AppFeedId");
+                        .HasForeignKey("FeedId");
                 });
 
-            modelBuilder.Entity("API.Entities.AppFeedFiles", b =>
+            modelBuilder.Entity("API.Entities.FeedFiles", b =>
                 {
-                    b.HasOne("API.Entities.AppFeed", null)
+                    b.HasOne("API.Entities.Feed", null)
                         .WithMany("FeedFiles")
-                        .HasForeignKey("AppFeedId");
+                        .HasForeignKey("FeedId");
                 });
 
-            modelBuilder.Entity("API.Entities.AppMatch", b =>
+            modelBuilder.Entity("API.Entities.Match", b =>
                 {
-                    b.HasOne("API.Entities.AppUser", "MatchedUser")
+                    b.HasOne("API.Entities.User", "MatchedUser")
                         .WithMany("Match")
                         .HasForeignKey("Id")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
-                    b.HasOne("API.Entities.AppUser", "User")
+                    b.HasOne("API.Entities.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -483,14 +475,14 @@ namespace mboameet.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("API.Entities.AppFeed", b =>
+            modelBuilder.Entity("API.Entities.Feed", b =>
                 {
                     b.Navigation("FeedComments");
 
                     b.Navigation("FeedFiles");
                 });
 
-            modelBuilder.Entity("API.Entities.AppUser", b =>
+            modelBuilder.Entity("API.Entities.User", b =>
                 {
                     b.Navigation("Feeds");
 

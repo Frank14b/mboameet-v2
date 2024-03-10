@@ -5,17 +5,17 @@ using API.DTOs;
 namespace API.Entities
 {
     [Table("matches")]
-    public class AppMatch
+    public class Match
     {
         public int Id { get; set; }
 
         public required int UserId { get; set; }
 
-        public AppUser? User { get; set; }
+        public User? User { get; set; }
 
         public required int MatchedUserId { get; set; }
 
-        public AppUser? MatchedUser { get; set; }
+        public User? MatchedUser { get; set; }
 
         [EnumDataType(typeof(MatchStateEnum))]
         public int State { get; set; } = (int)MatchStateEnum.inititated;

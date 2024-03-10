@@ -7,10 +7,10 @@ namespace API.Interfaces
     {
         Task SendEmailAsync(EmailRequestDto mailRequest);
         // string GetEmailTemplate(string emailTemplate, EmailRequestDto mailRequest);
-        string UserLoginBody(AppUser? data);
-        string UserRegisterBody(AppUser? data);
+        string UserLoginBody(User? data);
+        string UserRegisterBody(User? data);
         string UserForgetPasswordBody(ForgetPasswordEmailDto data);
-        string ChangePasswordBody(AppUser? data);
-        string DeleteAccountBody(AppUser? data);
+        string ChangePasswordBody(User? data);
+        string DeleteAccountBody(User? data);
     }
 }

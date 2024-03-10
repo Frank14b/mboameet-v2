@@ -26,14 +26,13 @@ namespace mboameet.Migrations
                     UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Status = table.Column<int>(type: "int", nullable: false),
                     UserId = table.Column<int>(type: "int", nullable: false),
-                    AppUserId = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_feeds", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_feeds_users_AppUserId",
-                        column: x => x.AppUserId,
+                        name: "FK_feeds_users_UserId",
+                        column: x => x.UserId,
                         principalTable: "users",
                         principalColumn: "Id");
                 });
@@ -50,14 +49,13 @@ namespace mboameet.Migrations
                     Status = table.Column<int>(type: "int", nullable: false),
                     UserId = table.Column<int>(type: "int", nullable: false),
                     FeedId = table.Column<int>(type: "int", nullable: false),
-                    AppFeedId = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_feedcomments", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_feedcomments_feeds_AppFeedId",
-                        column: x => x.AppFeedId,
+                        name: "FK_feedcomments_feeds_FeedId",
+                        column: x => x.FeedId,
                         principalTable: "feeds",
                         principalColumn: "Id");
                 });
@@ -76,32 +74,31 @@ namespace mboameet.Migrations
                     UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Status = table.Column<int>(type: "int", nullable: false),
                     FeedId = table.Column<int>(type: "int", nullable: false),
-                    AppFeedId = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_feedfiles", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_feedfiles_feeds_AppFeedId",
-                        column: x => x.AppFeedId,
+                        name: "FK_feedfiles_feeds_FeedId",
+                        column: x => x.FeedId,
                         principalTable: "feeds",
                         principalColumn: "Id");
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_feedcomments_AppFeedId",
+                name: "IX_feedcomments_FeedId",
                 table: "feedcomments",
-                column: "AppFeedId");
+                column: "FeedId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_feedfiles_AppFeedId",
+                name: "IX_feedfiles_FeedId",
                 table: "feedfiles",
-                column: "AppFeedId");
+                column: "FeedId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_feeds_AppUserId",
+                name: "IX_feeds_UserId",
                 table: "feeds",
-                column: "AppUserId");
+                column: "UserId");
 
             migrationBuilder.AddForeignKey(
                 name: "FK_matches_users_Id",

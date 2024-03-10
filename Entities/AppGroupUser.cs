@@ -7,7 +7,7 @@ using MongoDB.Bson.Serialization.Attributes;
 namespace API.Entities;
 
 [Table("groupusers")]
-public class AppGroupUser
+public class GroupUser
 {
     public int Id { get; set; }
 

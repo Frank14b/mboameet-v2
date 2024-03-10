@@ -7,7 +7,6 @@ using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
-using Microsoft.AspNetCore.Mvc;
 using AutoMapper;
 
 namespace API.Services;
@@ -90,7 +89,7 @@ public class UserService : IUserService
         }
     }
 
-    public async Task<AppAuthToken?> CreateAuthToken(CreateAuthTokenDto data)
+    public async Task<AuthToken?> CreateAuthToken(CreateAuthTokenDto data)
     {
         try
         {
@@ -99,7 +98,7 @@ public class UserService : IUserService
             string otp = await GenerateAuthToken();
             string token = Guid.NewGuid().ToString();
 
-            var authToken = new AppAuthToken
+            var authToken = new AuthToken
             {
                 Otp = int.Parse(otp),
                 Token = token,
@@ -120,11 +119,11 @@ public class UserService : IUserService
         }
     }
 
-    public async Task<AppAuthToken?> AuthTokenIsValid(int? otp, string token, int type, int status = (int)StatusEnum.enable)
+    public async Task<AuthToken?> AuthTokenIsValid(int? otp, string token, int type, int status = (int)StatusEnum.enable)
     {
         try
         {
-            AppAuthToken? existingToken = null;
+            AuthToken? existingToken = null;
 
             if (otp != null)
             {
@@ -158,7 +157,7 @@ public class UserService : IUserService
         return otpCode;
     }
 
-    public async Task<AppUser?> GetUserByEmail(string email)
+    public async Task<User?> GetUserByEmail(string email)
     {
         return await _dataContext.Users.FirstOrDefaultAsync((x) => x.Email != null && x.Email.ToLower() == email.ToLower() && x.Status == (int)StatusEnum.enable);
     }
@@ -204,7 +203,7 @@ public class UserService : IUserService
         return await _dataContext.Users.AnyAsync((x) => x.Email != null && x.Email.ToLower() == useremail.ToLower());
     }
 
-    public async Task<AppUser?> GetUserById(int id)
+    public async Task<User?> GetUserById(int id)
     {
         try
         {
@@ -219,7 +218,7 @@ public class UserService : IUserService
         }
     }
 
-    public async Task<List<AppUser>> GetUsers()
+    public async Task<List<User>> GetUsers()
     {
         var result = await _dataContext.Users.Where(x => x.Status == (int)StatusEnum.enable).ToListAsync();
         return result;
@@ -267,13 +266,13 @@ public class UserService : IUserService
         }
     }
 
-    public async Task<AppUser?> CreateUserAccount(RegisterDto? data)
+    public async Task<User?> CreateUserAccount(RegisterDto? data)
     {
         try
         {
             PassWordGeneratedDto password = GeneratePassword(data?.Password ?? "");
 
-            var user = new AppUser
+            var user = new User
             {
                 UserName = data?.UserName ?? "",
                 PasswordHash = password.PasswordHash,
@@ -310,7 +309,7 @@ public class UserService : IUserService
         }
     }
 
-    public async Task<AppUser?> AuthenticateUser(LoginDto data)
+    public async Task<User?> AuthenticateUser(LoginDto data)
     {
         try
         {
@@ -349,7 +348,7 @@ public class UserService : IUserService
     {
         try
         {
-            AppUser? user = await _dataContext.Users.FirstOrDefaultAsync(u => u.Id == userId);
+            User? user = await _dataContext.Users.FirstOrDefaultAsync(u => u.Id == userId);
 
             if (user == null) return null;
 
@@ -396,7 +395,7 @@ public class UserService : IUserService
         }
     }
 
-    public async Task<ResultForgetPasswordDto?> ForgetPassword(AppUser user)
+    public async Task<ResultForgetPasswordDto?> ForgetPassword(User user)
     {
         try
         {
@@ -441,7 +440,7 @@ public class UserService : IUserService
         }
     }
 
-    public async Task<BooleanReturnDto?> ChangeForgetPassword(AppUser user, ChangePasswordDto data)
+    public async Task<BooleanReturnDto?> ChangeForgetPassword(User user, ChangePasswordDto data)
     {
         try
         {
@@ -476,11 +475,11 @@ public class UserService : IUserService
         }
     }
 
-    public async Task<ResultUserDto?> UpdateProfileImage(AppUser user, [FromForm] IFormFile image, string folder)
+    public async Task<ResultUserDto?> UpdateProfileImage(User user, IFormFile image, string folder)
     {
         try
         {
-            string? fileUrl = await _appFileService.UploadFile(image, user.Id.ToString(), "gallery");
+            string? fileUrl = await _appFileService.UploadFile(image, user.Id, "gallery");
 
             if (fileUrl is not null)
             {

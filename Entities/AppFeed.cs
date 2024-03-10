@@ -5,7 +5,7 @@ using API.DTOs;
 namespace API.Entities;
 
 [Table("feeds")]
-public class AppFeed
+public class Feed
 {
     public int Id { get; set; }
 
@@ -20,7 +20,9 @@ public class AppFeed
     
     public int UserId { get; set; }
 
-    public ICollection<AppFeedComment>? FeedComments {get; set;}
+    public User? User {get; set;}
 
-    public ICollection<AppFeedFiles>? FeedFiles { get; set; }
+    public ICollection<FeedComment>? FeedComments {get; set;}
+
+    public ICollection<FeedFiles>? FeedFiles { get; set; }
 }

@@ -55,7 +55,7 @@ public class GroupService : IGroupService
     {
         try
         {
-            AppGroup? group = await _dataContext.Groups.FirstOrDefaultAsync(g => g.Status != (int)StatusEnum.delete && g.UserId == userId && g.Id == id);
+            Group? group = await _dataContext.Groups.FirstOrDefaultAsync(g => g.Status != (int)StatusEnum.delete && g.UserId == userId && g.Id == id);
             if (group == null) return false;
 
             group.Name = data?.Name ?? group.Name;
@@ -77,7 +77,7 @@ public class GroupService : IGroupService
     {
         try
         {
-            AppGroup? group = await _dataContext.Groups.FirstOrDefaultAsync(g => g.Status != (int)StatusEnum.delete && g.UserId == userId && g.Id == id);
+            Group? group = await _dataContext.Groups.FirstOrDefaultAsync(g => g.Status != (int)StatusEnum.delete && g.UserId == userId && g.Id == id);
             if (group == null) return false;
 
             group.Status = (int)StatusEnum.delete;
@@ -104,7 +104,7 @@ public class GroupService : IGroupService
     {
         try
         {
-            AppGroupUser newGroupUser = new()
+            GroupUser newGroupUser = new()
             {
                 UserId = userId,
                 GroupId = id,
@@ -127,7 +127,7 @@ public class GroupService : IGroupService
     {
         try
         {
-            var newGroup = _mapper.Map<AppGroup>(data);
+            var newGroup = _mapper.Map<Group>(data);
             newGroup.UserId = userId;
 
             await _dataContext.AddAsync(newGroup);

@@ -38,7 +38,7 @@ namespace API.Controllers
 
                 // if (!(await _matchService.CheckIfUserIsMatch(id, data.Receiver.ToString())).Status) return BadRequest("You must be matching with this user to send a message");
 
-                AppChat? newChat = await _chatService.SendMessage(data, id);
+                Chat? newChat = await _chatService.SendMessage(data, id);
 
                 var result = _mapper.Map<MessageResultDto>(newChat);
 

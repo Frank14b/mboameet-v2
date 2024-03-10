@@ -7,7 +7,7 @@ namespace API.Entities
 {
     [Table("users")]
     [Index(nameof(Email), nameof(UserName), IsUnique = true)]
-    public class AppUser
+    public class User
     {
         public int Id { get; set; }
 
@@ -33,9 +33,9 @@ namespace API.Entities
 
         public int Age { get; set; }
 
-        public ICollection<AppMatch>? Match { get; set; }
+        public ICollection<Match>? Match { get; set; }
 
-        public ICollection<AppFeed>? Feeds { get; set; }
+        public ICollection<Feed>? Feeds { get; set; }
 
         public DateTime LastLogin { get; set; }
 

@@ -22,7 +22,7 @@ public class UserSeeder
             {
                 using var hmac = new HMACSHA512();
 
-                // var user = new AppUser
+                // var user = new User
                 // {
                 //     UserName = "frank",
                 //     PasswordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes("33@Elrangers")),

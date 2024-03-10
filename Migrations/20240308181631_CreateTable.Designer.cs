@@ -25,7 +25,7 @@ namespace mboameet.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("API.Entities.AppAuthToken", b =>
+            modelBuilder.Entity("API.Entities.AuthToken", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -67,7 +67,7 @@ namespace mboameet.Migrations
                     b.ToTable("authtokens");
                 });
 
-            modelBuilder.Entity("API.Entities.AppChat", b =>
+            modelBuilder.Entity("API.Entities.Chat", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -102,7 +102,7 @@ namespace mboameet.Migrations
                     b.ToTable("chats");
                 });
 
-            modelBuilder.Entity("API.Entities.AppGroup", b =>
+            modelBuilder.Entity("API.Entities.Group", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -138,7 +138,7 @@ namespace mboameet.Migrations
                     b.ToTable("groups");
                 });
 
-            modelBuilder.Entity("API.Entities.AppGroupChat", b =>
+            modelBuilder.Entity("API.Entities.GroupChat", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -173,7 +173,7 @@ namespace mboameet.Migrations
                     b.ToTable("groupchats");
                 });
 
-            modelBuilder.Entity("API.Entities.AppGroupUser", b =>
+            modelBuilder.Entity("API.Entities.GroupUser", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -204,7 +204,7 @@ namespace mboameet.Migrations
                     b.ToTable("groupusers");
                 });
 
-            modelBuilder.Entity("API.Entities.AppGroupeAcces", b =>
+            modelBuilder.Entity("API.Entities.GroupeAcces", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -234,7 +234,7 @@ namespace mboameet.Migrations
                     b.ToTable("groupaccess");
                 });
 
-            modelBuilder.Entity("API.Entities.AppMatch", b =>
+            modelBuilder.Entity("API.Entities.Match", b =>
                 {
                     b.Property<int>("Id")
                         .HasColumnType("int");
@@ -264,7 +264,7 @@ namespace mboameet.Migrations
                     b.ToTable("matches");
                 });
 
-            modelBuilder.Entity("API.Entities.AppUser", b =>
+            modelBuilder.Entity("API.Entities.User", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -328,15 +328,15 @@ namespace mboameet.Migrations
                     b.HasAnnotation("Mongo:CollectionName", "users");
                 });
 
-            modelBuilder.Entity("API.Entities.AppMatch", b =>
+            modelBuilder.Entity("API.Entities.Match", b =>
                 {
-                    b.HasOne("API.Entities.AppUser", "MatchedUser")
+                    b.HasOne("API.Entities.User", "MatchedUser")
                         .WithMany("Match")
                         .HasForeignKey("Id")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
-                    b.HasOne("API.Entities.AppUser", "User")
+                    b.HasOne("API.Entities.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.NoAction)
@@ -347,7 +347,7 @@ namespace mboameet.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("API.Entities.AppUser", b =>
+            modelBuilder.Entity("API.Entities.User", b =>
                 {
                     b.Navigation("Match");
                 });

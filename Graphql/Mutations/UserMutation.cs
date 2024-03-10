@@ -27,7 +27,7 @@ public class UserMutation : ObjectGraphType
 
         async Task<ResultUserDto> SignUp(RegisterDto data)
         {
-            AppUser? user = await _userService.CreateUserAccount(data);
+            User? user = await _userService.CreateUserAccount(data);
             return _mapper.Map<ResultUserDto>(user);
         }
     }

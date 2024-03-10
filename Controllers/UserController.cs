@@ -54,7 +54,7 @@ public class UsersController : BaseApiController
 
         if (!_userService.IsValidPassword(data?.Password ?? "")) return BadRequest("Password should have at least 1 lowercase letter, 1 uppercase letter, 1 digit, 1 special character, and at least 8 characters long");
 
-        AppUser? user = await _userService.CreateUserAccount(data);
+        User? user = await _userService.CreateUserAccount(data);
 
         if (user == null) return BadRequest("Couldn't create user account. Please try again later.");
 
@@ -71,7 +71,7 @@ public class UsersController : BaseApiController
     {
         if (data is null) return BadRequest("Invalid Username / Password, User not found");
 
-        AppUser? user = await _userService.AuthenticateUser(data);
+        User? user = await _userService.AuthenticateUser(data);
 
         // string? ip = _userService.GetUserIpAddress(HttpContext); // get user ip address from http
 
@@ -158,7 +158,7 @@ public class UsersController : BaseApiController
     [HttpPost("forget-password")]
     public async Task<ActionResult<ResultForgetPasswordDto>> FogetPassword(ForgetPasswordDto data)
     {
-        AppUser? user = await _userService.GetUserByEmail(data.Email);
+        User? user = await _userService.GetUserByEmail(data.Email);
 
         if (user is null) return BadRequest("The provided email is not found");
 
@@ -207,7 +207,7 @@ public class UsersController : BaseApiController
         existingToken.Status = (int)StatusEnum.disable;
         await _context.SaveChangesAsync();
 
-        AppUser? user = await _userService.GetUserByEmail(existingToken.Email);
+        User? user = await _userService.GetUserByEmail(existingToken.Email);
 
         if (user == null) return BadRequest("An error occured or invalid token"); // check if user exist or not
 
@@ -223,7 +223,7 @@ public class UsersController : BaseApiController
     {
         int userId = _userService.GetConnectedUser(User);
 
-        AppUser? user = await _userService.GetUserById(userId);
+        User? user = await _userService.GetUserById(userId);
 
         if (user == null) return BadRequest("An error occured");
 
@@ -270,7 +270,7 @@ public class UsersController : BaseApiController
     {
         int userId = _userService.GetConnectedUser(User);
 
-        AppUser? user = await _userService.GetUserById(userId);
+        User? user = await _userService.GetUserById(userId);
 
         if (user == null) return BadRequest("An error occured");
 
