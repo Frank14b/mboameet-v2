@@ -1,4 +1,5 @@
 using API.Entities;
+using Org.BouncyCastle.Bcpg;
 
 namespace API.DTOs;
 
@@ -15,5 +16,8 @@ public class FeedResultDto
     public string? Message { get; set; }
     public ICollection<FeedFiles>? FeedFiles { get; set; }
     public int Status { get; set; }
-    public required ResultUserDto User {get; set;}
+    public required ResultUserDto User { get; set; }
+    public required int UserId { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
 }

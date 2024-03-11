@@ -1,6 +1,7 @@
 using API.DTOs;
 using API.Entities;
 using API.Interfaces;
+using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -11,9 +12,11 @@ namespace API.Controllers;
 public class FeedController: BaseApiController {
     private readonly IUserService _userService;
     private readonly IFeedService _feedService;
-    public FeedController(IUserService userService, IFeedService feedService) {
+    private readonly IMapper _mapper;
+    public FeedController(IUserService userService, IFeedService feedService, IMapper mapper) {
         _userService = userService;
         _feedService = feedService;
+        _mapper = mapper;
     }
 
     [HttpPost("")]
@@ -24,17 +27,19 @@ public class FeedController: BaseApiController {
 
          if(feed is null) return BadRequest("Couldn't create the feed. please retry later");
 
-         return Ok(feed);
+         FeedResultDto result = _mapper.Map<FeedResultDto>(feed);
+
+         return result;
     }
 
     [HttpGet("")]
-    public async Task<ActionResult<FeedResultDto>> GetFeeds (int skip = 0, int limit = 10, string sort = "desc") {
+    public async Task<ActionResult<ResultPaginate<FeedResultDto>>> GetFeeds (int skip = 0, int limit = 10, string sort = "desc") {
          int userId = _userService.GetConnectedUser(User);
 
-         Feed? feed = null; // await _feedService.CreateNewFeed(data, userId);
+         ResultPaginate<FeedResultDto>? feeds = await _feedService.GetAllFeeds(userId, skip, limit, sort);
 
-         if(feed is null) return BadRequest("Couldn't create the feed. please retry later");
+         if(feeds is null) return BadRequest("An Error occured. Can't get feeds");
 
-         return Ok(feed);
+         return feeds;
     }
 }

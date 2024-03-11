@@ -25,4 +25,6 @@ public class FeedFiles
     public int Status { get; set; } = (int)StatusEnum.enable;
 
     public int FeedId { get; set; }
+
+    public required Feed Feed {get; set;}
 }

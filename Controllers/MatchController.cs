@@ -52,7 +52,7 @@ public class MatchController : BaseApiController
     }
 
     [HttpGet("")]
-    public async Task<ActionResult<IEnumerable<ResultPaginate<MatchesResultDto>>>> GetUserMatches(int skip = 0, int limit = 50, string sort = "desc")
+    public async Task<ActionResult<ResultPaginate<MatchesResultDto>>> GetUserMatches(int skip = 0, int limit = 50, string sort = "desc")
     {
         try
         {
@@ -62,7 +62,7 @@ public class MatchController : BaseApiController
 
             if (matches == null) return BadRequest("An error occurred when trying to get matches");
 
-            return Ok(matches);
+            return matches;
         }
         catch (Exception e)
         {
