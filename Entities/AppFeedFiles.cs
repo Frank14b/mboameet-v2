@@ -26,5 +26,5 @@ public class FeedFiles
 
     public int FeedId { get; set; }
 
-    public required Feed Feed {get; set;}
+    public Feed? Feed {get; set;}
 }

@@ -46,6 +46,12 @@ public static class AppConstants
     public const int PasswordMinLength = 8;
 }
 
+public static class AppHubConstants 
+{
+    public const string NewFeedAdded = "NewFeedAdded";
+    public const string FeedDeleted = "FeedDeleted";
+}
+
 public class AppImage 
 {
     public string? Url { get; set; }

@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Caching.Distributed;
 
-namespace API.AppHub;
+namespace API.AppHubs;
 
 [Authorize]
 public class AppHub : Hub
@@ -30,7 +30,7 @@ public class AppHub : Hub
 
         if (userId != null)
         {
-            Console.WriteLine("userId  === " + connectionId);
+            // Console.WriteLine("userId  === " + connectionId);
             _redisCache.SetString("SocketClients", connectionId, new DistributedCacheEntryOptions
             {
                 AbsoluteExpiration = DateTimeOffset.UtcNow.AddHours(1)
@@ -45,7 +45,7 @@ public class AppHub : Hub
         if (userId == null) return;
         
         var cachedValue = _redisCache.GetString("SocketClients");
-        Console.WriteLine("cachedValue === " + cachedValue);
+        // Console.WriteLine("cachedValue === " + cachedValue);
 
         User? userData = await _userService.GetUserById(int.Parse(userId));
         await Clients.Caller.SendAsync("UserProfile", _mapper.Map<ResultUserDto>(userData));

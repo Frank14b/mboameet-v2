@@ -1,17 +1,15 @@
-using API.AppHub;
+using API.AppHubs;
 using API.Data;
 using API.DTOs;
 using API.Entities;
 using API.Interfaces;
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
-using MongoDB.Bson;
 
 namespace API.Services
 {
     public class ChatService : IChatService
     {
- 
         private readonly DataContext _dataContext;
         private readonly IMapper _mapper;
 

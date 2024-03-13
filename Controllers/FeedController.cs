@@ -13,6 +13,7 @@ public class FeedController: BaseApiController {
     private readonly IUserService _userService;
     private readonly IFeedService _feedService;
     private readonly IMapper _mapper;
+
     public FeedController(IUserService userService, IFeedService feedService, IMapper mapper) {
         _userService = userService;
         _feedService = feedService;
@@ -23,13 +24,11 @@ public class FeedController: BaseApiController {
     public async Task<ActionResult<FeedResultDto>> AddFeed ([FromForm] CreateFeedDto data) {
          int userId = _userService.GetConnectedUser(User);
 
-         Feed? feed = await _feedService.CreateNewFeed(data, userId);
+         FeedResultDto? feed = await _feedService.CreateNewFeed(data, userId);
 
          if(feed is null) return BadRequest("Couldn't create the feed. please retry later");
 
-         FeedResultDto result = _mapper.Map<FeedResultDto>(feed);
-
-         return result;
+         return feed;
     }
 
     [HttpGet("")]
@@ -41,5 +40,17 @@ public class FeedController: BaseApiController {
          if(feeds is null) return BadRequest("An Error occured. Can't get feeds");
 
          return feeds;
+    }
+
+    [HttpDelete("{id}")]
+    public async Task<ActionResult<BooleanReturnDto>> DeleteFeed (int id) {
+         int userId = _userService.GetConnectedUser(User);
+
+         BooleanReturnDto? result = await _feedService.DeleteFeed(id, userId);
+
+         if(result is null) return BadRequest("An Error occured. Can't delete the feed");
+         if(result.Status == false) return NotFound(result.Message);
+
+         return result;
     }
 }
