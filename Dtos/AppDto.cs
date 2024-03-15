@@ -50,6 +50,7 @@ public static class AppHubConstants
 {
     public const string NewFeedAdded = "NewFeedAdded";
     public const string FeedDeleted = "FeedDeleted";
+    public const string FeedUpdated = "FeedUpdated";
 }
 
 public class AppImage 

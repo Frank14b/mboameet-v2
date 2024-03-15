@@ -130,7 +130,7 @@ namespace mboameet.Migrations
                 column: "Id",
                 principalTable: "users",
                 principalColumn: "Id",
-                onDelete: ReferentialAction.Cascade);
+                onDelete: ReferentialAction.NoAction);
         }
     }
 }

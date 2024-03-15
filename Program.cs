@@ -18,6 +18,7 @@ using API.Mutation;
 using GraphQL.Types;
 using GraphiQl;
 using Microsoft.Extensions.FileProviders;
+using API.Entities;
 // using NRedisStack;
 // using NRedisStack.RedisStackCommands;
 
@@ -138,6 +139,8 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IAppFileService, AppFileService>();
 builder.Services.AddScoped<IFeedService, FeedService>();
 builder.Services.AddScoped<IFeedFileService, FeedFileService>();
+builder.Services.AddScoped<IFeedLikeService, FeedLikeService>();
+builder.Services.AddScoped<IFeedCommentService, FeedCommentService>();
 
 builder.Services.AddSignalR();
 builder.Services.AddMemoryCache();

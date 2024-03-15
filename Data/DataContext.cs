@@ -28,7 +28,9 @@ public class DataContext : DbContext
 
     public DbSet<FeedComment> FeedComments {get; set;}
 
-    public DbSet<FeedFiles> FeedFiles {get; set;}
+    public DbSet<FeedFile> FeedFiles {get; set;}
+
+    public DbSet<FeedLike> FeedLikes {get; set;}
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

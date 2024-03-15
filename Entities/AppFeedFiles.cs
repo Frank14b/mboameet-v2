@@ -5,7 +5,7 @@ using API.DTOs;
 namespace API.Entities;
 
 [Table("feedfiles")]
-public class FeedFiles
+public class FeedFile
 {
     public int Id { get; set; }
 
@@ -23,6 +23,8 @@ public class FeedFiles
 
     [EnumDataType(typeof(StatusEnum))]
     public int Status { get; set; } = (int)StatusEnum.enable;
+
+    public int UserId { get; set; }
 
     public int FeedId { get; set; }
 

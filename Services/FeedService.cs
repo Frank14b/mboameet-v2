@@ -17,6 +17,7 @@ public class FeedService : IFeedService
     private readonly IMapper _mapper;
     private readonly IHubContext<AppHub> _hubContext;
     private readonly IFeedFileService _feedFileService;
+    private readonly IFeedLikeService _feedLikeService;
     public FeedService(
         DataContext context,
         IMailService mailService,
@@ -24,7 +25,8 @@ public class FeedService : IFeedService
         IAppFileService appFileService,
         IMapper mapper,
         IHubContext<AppHub> hubContext,
-        IFeedFileService feedFileService)
+        IFeedFileService feedFileService,
+        IFeedLikeService feedLikeService)
     {
         _context = context;
         _mailService = mailService;
@@ -32,6 +34,7 @@ public class FeedService : IFeedService
         _mapper = mapper;
         _hubContext = hubContext;
         _feedFileService = feedFileService;
+        _feedLikeService = feedLikeService;
     }
 
     public async Task<FeedResultDto?> CreateNewFeed(CreateFeedDto data, int userId)
@@ -77,9 +80,11 @@ public class FeedService : IFeedService
 
             int feedCount = await query.CountAsync();
 
-            List<Feed> feeds = await query.Skip(skip).Take(limit).Include(e => e.User).Include(e => e.FeedFiles).ToListAsync();
+            query = query.Skip(skip).Take(limit);
+            query = query.Include(e => e.FeedLikes.Where(fl => fl.UserId == userId));
+            query = query.Include(e => e.User).Include(e => e.FeedFiles);
 
-            Console.WriteLine(feeds.ToArray()[0].ToString());
+            List<Feed> feeds = await query.ToListAsync();
 
             IEnumerable<FeedResultDto> result = _mapper.Map<IEnumerable<FeedResultDto>>(feeds);
 
@@ -100,13 +105,51 @@ public class FeedService : IFeedService
         }
     }
 
-    public async Task<BooleanReturnDto?> DeleteFeed(int feedId, int userId)
+    public async Task<BooleanReturnDto?> UpdateFeed(int feedId, int userId, UpdateFeedDto data)
     {
         try
         {
             Feed? feed = await _context.Feeds.Where(
                 x => x.Id == feedId && x.Status != (int)StatusEnum.delete && x.UserId == userId
             ).FirstAsync();
+
+            if (feed is null)
+            {
+                return new BooleanReturnDto()
+                {
+                    Status = false,
+                    Message = $"Invalid Feed id: {feed}"
+                };
+            }
+
+            feed.Message = data.Message;
+            feed.UpdatedAt = DateTime.Now;
+            _context.Update(feed);
+            await _context.SaveChangesAsync();
+
+            var result = _mapper.Map<FeedResultDto>(feed);
+
+            await _hubContext.Clients.All.SendAsync(AppHubConstants.FeedUpdated, result);
+
+            return new BooleanReturnDto()
+            {
+                Status = true,
+                Message = $"The provided feed: {feed} have been updated",
+                Data = result
+            };
+        }
+        catch (Exception e)
+        {
+            _logger.LogError("An error occured during feed creation ${message}", e.Message);
+            return null;
+        }
+    }
+
+    public async Task<BooleanReturnDto?> DeleteFeed(int feedId, int userId)
+    {
+        try
+        {
+            Feed? feed = await GetUserFeedById(feedId, userId);
 
             if (feed is null)
             {
@@ -135,5 +178,121 @@ public class FeedService : IFeedService
             _logger.LogError("An error occured during feed creation ${message}", e.Message);
             return null;
         }
+    }
+
+    public async Task<bool> IsValidFeedId(int id)
+    {
+        Feed? feed = await _context.Feeds.Where(f => f.Id == id && f.Status == (int)StatusEnum.enable).FirstAsync();
+        if (feed is null) return false;
+        return true;
+    }
+
+    public async Task<Feed?> GetFeedById(int id)
+    {
+        Feed? feed = await _context.Feeds.Where(f => f.Id == id && f.Status == (int)StatusEnum.enable).FirstAsync();
+        return feed;
+    }
+
+    public async Task<Feed?> GetFeedByIdLinq(int id, int userId)
+    {
+        var query = _context.Feeds.Where(f => f.Id == id && f.Status == (int)StatusEnum.enable);
+        query = query.Include(e => e.FeedLikes.Where(fl => fl.UserId == userId));
+        query = query.Include(e => e.User).Include(e => e.FeedFiles);
+
+        Feed? feed = await query.FirstAsync();
+
+        return feed;
+    }
+
+    public async Task<Feed?> GetUserFeedById(int id, int userId)
+    {
+        Feed? feed = await _context.Feeds.Where(f => f.Id == id && f.Status == (int)StatusEnum.enable && f.UserId == userId).FirstAsync();
+        return feed;
+    }
+
+    public async Task<BooleanReturnDto?> AddFeedLikes(int feedId, int userId)
+    {
+        Feed? feed = await GetFeedById(feedId);
+
+        if (feed is null)
+        {
+            return new BooleanReturnDto()
+            {
+                Status = false,
+                Message = $"Invalid Feed id: {feed}"
+            };
+        }
+
+        BooleanReturnDto? like = await _feedLikeService.CreateFeedLike(feedId, userId);
+        if (like is null) return null;
+
+        if (like.Status == true)
+        {
+            feed.Likes += 1;
+            feed.UpdatedAt = DateTime.Now;
+            _context.Update(feed);
+            await _context.SaveChangesAsync();
+        }
+        else
+        {
+            return like;
+        }
+
+        List<FeedLike> userLike = new(1)
+            {
+                like.Data
+            };
+        feed.FeedLikes = userLike;
+
+        var result = _mapper.Map<FeedResultDto>(feed);
+        await _hubContext.Clients.All.SendAsync(AppHubConstants.FeedUpdated, result);
+
+        return new BooleanReturnDto()
+        {
+            Status = true,
+            Message = $"The provided feed: {feedId} have been updated",
+            Data = result
+        };
+    }
+
+    public async Task<BooleanReturnDto?> RemoveFeedLikes(int feedId, int userId)
+    {
+        Feed? feed = await GetFeedById(feedId);
+
+        if (feed is null)
+        {
+            return new BooleanReturnDto()
+            {
+                Status = false,
+                Message = $"Invalid Feed id: {feed}"
+            };
+        }
+
+        BooleanReturnDto? like = await _feedLikeService.DeleteFeedLike(feedId, userId);
+        if (like is null) return null;
+
+        if (like.Status == true)
+        {
+            feed.Likes -= 1;
+            feed.UpdatedAt = DateTime.Now;
+            _context.Update(feed);
+            await _context.SaveChangesAsync();
+        }
+        else
+        {
+            return like;
+        }
+
+        feed.FeedLikes = null;
+
+        var result = _mapper.Map<FeedResultDto>(feed);
+        await _hubContext.Clients.All.SendAsync(AppHubConstants.FeedUpdated, result);
+
+        return new BooleanReturnDto()
+        {
+            Status = true,
+            Message = $"The provided feed: {feedId} have been updated",
+            Data = result
+        };
     }
 }

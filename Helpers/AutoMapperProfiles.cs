@@ -1,3 +1,4 @@
+using Api.DTOs;
 using API.DTOs;
 using API.Entities;
 using AutoMapper;
@@ -16,7 +17,10 @@ namespace API.Helpers
             CreateMap<Match, MatchesResultDto>();
             CreateMap<CreateUserDto, User>();
             CreateMap<Feed, FeedResultDto>();
-            // CreateMap<AddMatchDto, Match>();
+            CreateMap<User, ResultUserFeedDto>();
+            CreateMap<FeedFile, ResultFeedFileDto>();
+            CreateMap<FeedComment, ResultFeedCommentDto>();
+            CreateMap<FeedLike, ResultFeedLike>();
         }
     }
 }

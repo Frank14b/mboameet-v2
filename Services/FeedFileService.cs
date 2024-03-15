@@ -30,13 +30,14 @@ public class FeedFileService : IFeedFileService
 
             foreach (string fileLink in fileUrls)
             {
-                FeedFiles feedFile = new()
+                FeedFile feedFile = new()
                 {
                     Url = fileLink,
                     PreviewUrl = fileLink,
                     Type = "",
                     DisplayMode = "",
                     FeedId = feedId,
+                    UserId = userId
                 };
 
                 await _context.AddAsync(feedFile);

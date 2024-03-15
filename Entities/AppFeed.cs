@@ -24,5 +24,11 @@ public class Feed
 
     public ICollection<FeedComment>? FeedComments {get; set;}
 
-    public ICollection<FeedFiles>? FeedFiles { get; set; }
+    public ICollection<FeedFile>? FeedFiles { get; set; }
+
+    public int Likes { get; set; }
+
+    public int Views { get; set; }
+
+    public ICollection<FeedLike>? FeedLikes { get; set; }
 }

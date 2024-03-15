@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace mboameet.Migrations
 {
     [DbContext(typeof(DataContext))]
-    [Migration("20240308194758_CreateFeedsTable")]
-    partial class CreateFeedsTable
+    [Migration("20240314203346_UpdateFeedLikes")]
+    partial class UpdateFeedLikes
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -110,11 +110,11 @@ namespace mboameet.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("UserId")
-                        .HasColumnType("int");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
+
+                    b.Property<int>("Likes")
+                        .HasColumnType("int");
 
                     b.Property<string>("Message")
                         .HasColumnType("nvarchar(max)");
@@ -126,6 +126,9 @@ namespace mboameet.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Views")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
@@ -163,10 +166,14 @@ namespace mboameet.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("FeedId");
+
+                    b.HasIndex("UserId");
+
                     b.ToTable("feedcomments");
                 });
 
-            modelBuilder.Entity("API.Entities.FeedFiles", b =>
+            modelBuilder.Entity("API.Entities.FeedFile", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -202,11 +209,43 @@ namespace mboameet.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.HasIndex("FeedId");
 
                     b.ToTable("feedfiles");
+                });
+
+            modelBuilder.Entity("API.Entities.FeedLike", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("Count")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("FeedId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FeedId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("feedlikes");
                 });
 
             modelBuilder.Entity("API.Entities.Group", b =>
@@ -437,23 +476,60 @@ namespace mboameet.Migrations
 
             modelBuilder.Entity("API.Entities.Feed", b =>
                 {
-                    b.HasOne("API.Entities.User", null)
+                    b.HasOne("API.Entities.User", "User")
                         .WithMany("Feeds")
-                        .HasForeignKey("UserId");
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("API.Entities.FeedComment", b =>
                 {
                     b.HasOne("API.Entities.Feed", null)
                         .WithMany("FeedComments")
-                        .HasForeignKey("FeedId");
+                        .HasForeignKey("FeedId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("API.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 
-            modelBuilder.Entity("API.Entities.FeedFiles", b =>
+            modelBuilder.Entity("API.Entities.FeedFile", b =>
                 {
-                    b.HasOne("API.Entities.Feed", null)
+                    b.HasOne("API.Entities.Feed", "Feed")
                         .WithMany("FeedFiles")
-                        .HasForeignKey("FeedId");
+                        .HasForeignKey("FeedId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("Feed");
+                });
+
+            modelBuilder.Entity("API.Entities.FeedLike", b =>
+                {
+                    b.HasOne("API.Entities.Feed", "Feed")
+                        .WithMany()
+                        .HasForeignKey("FeedId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("API.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("Feed");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("API.Entities.Match", b =>
