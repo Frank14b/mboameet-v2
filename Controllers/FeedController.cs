@@ -98,17 +98,33 @@ public class FeedController: BaseApiController {
     }
 
     [HttpGet("{id}/comments")]
-    public async Task<ActionResult<ResultPaginate<ResultFeedCommentDto>>> GetFeedComments (int id, int skip=0, int limit=10) {
+    public async Task<ActionResult<ResultPaginate<ResultFeedCommentDto>>> GetFeedComments (int id, int skip=0, int limit=10, string sort = "desc") {
 
-         ResultPaginate<ResultFeedCommentDto> comments = await _feedCommentService.GetFeedComments(id, skip, limit);
+         ResultPaginate<ResultFeedCommentDto> comments = await _feedCommentService.GetFeedComments(id, skip, limit, sort);
+
+         if(comments.Data.Any() is false) return NotFound("No data found");
 
          return comments;
     }
 
     [HttpPost("{id}/comments")]
-    public async Task<ActionResult<ResultFeedCommentDto>> CreateComment (CreateCommentDto data, int id) {
+    public async Task<ActionResult<ResultFeedCommentDto>> CreateComment ([FromForm] CreateCommentDto data, int id) {
        int userId = _userService.GetConnectedUser(User);
        ResultFeedCommentDto? comment = await _feedCommentService.CreateComment(data, id, userId);
+
+       if(comment is null) return BadRequest("An Error occured. Can't create the feed comment");
+
+       return comment;
+    }
+
+    [HttpPost("{feedId}/comments/{id}")]
+    public async Task<ActionResult<BooleanReturnDto>> CreateComment ([FromForm] UpdateCommentDto data, int feedId, int id) {
+       int userId = _userService.GetConnectedUser(User);
+
+       bool feed = await _feedService.IsValidFeedId(feedId); // check if the feed id i valid
+       if(!feed) BadRequest("invalid feed id provided");
+
+       BooleanReturnDto? comment = await _feedCommentService.UpdateComment(data, id, userId);
 
        if(comment is null) return BadRequest("An Error occured. Can't create the feed comment");
 

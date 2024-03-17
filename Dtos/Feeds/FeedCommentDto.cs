@@ -14,5 +14,9 @@ public class ResultFeedCommentDto
 }
 
 public class CreateCommentDto {
-    public required string Context { get; set; }
+    public required string Content { get; set; }
+}
+
+public class UpdateCommentDto {
+    public required string Content { get; set; }
 }

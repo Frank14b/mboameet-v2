@@ -182,8 +182,8 @@ public class FeedService : IFeedService
 
     public async Task<bool> IsValidFeedId(int id)
     {
-        Feed? feed = await _context.Feeds.Where(f => f.Id == id && f.Status == (int)StatusEnum.enable).FirstAsync();
-        if (feed is null) return false;
+        int feed = await _context.Feeds.Where(f => f.Id == id && f.Status == (int)StatusEnum.enable).CountAsync();
+        if (feed  == 0) return false;
         return true;
     }
 

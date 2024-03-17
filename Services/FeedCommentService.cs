@@ -24,9 +24,14 @@ public class FeedCommentService : IFeedCommentService
         _mapper = mapper;
     }
 
-    public async Task<ResultPaginate<ResultFeedCommentDto>> GetFeedComments(int feedId, int skip = 0, int limit = 10)
+    public async Task<ResultPaginate<ResultFeedCommentDto>> GetFeedComments(int feedId, int skip = 0, int limit = 10, string sort = "desc")
     {
         var query = _context.FeedComments.Where(fc => fc.FeedId == feedId && fc.Status == (int)StatusEnum.enable);
+
+        // Apply sorting directly in the query
+        query = sort == "desc"
+            ? query.OrderByDescending(x => x.CreatedAt)
+            : query.OrderBy(x => x.CreatedAt);
 
         int total = await query.CountAsync();
 
@@ -51,7 +56,7 @@ public class FeedCommentService : IFeedCommentService
         {
             FeedComment commentObj = new()
             {
-                Content = data.Context,
+                Content = data.Content,
                 FeedId = feedId,
                 UserId = userId
             };
@@ -65,6 +70,40 @@ public class FeedCommentService : IFeedCommentService
         catch (Exception e)
         {
             _logger.LogError("An error occured while creating comment ${message}", e.Message);
+            return null;
+        }
+    }
+
+    public async Task<BooleanReturnDto?> UpdateComment(UpdateCommentDto data, int id, int userId)
+    {
+        try
+        {
+            FeedComment? comment = await _context.FeedComments.Where(fc => fc.Id == id && fc.UserId == userId && fc.Status == (int)StatusEnum.enable).FirstAsync();
+
+            if (comment is null)
+            {
+                return new BooleanReturnDto()
+                {
+                    Status = false,
+                    Message = "Comment not found",
+                };
+            }
+
+            comment.Content = data.Content;
+            _context.Update(comment);
+            await _context.SaveChangesAsync();
+
+            var updatedComment = _mapper.Map<ResultFeedCommentDto>(comment);
+            return new BooleanReturnDto()
+            {
+                Status = true,
+                Message = "Comment updated",
+                Data = updatedComment
+            };
+        }
+        catch (Exception e)
+        {
+            _logger.LogError("An error occured while updating comment ${message}", e.Message);
             return null;
         }
     }
