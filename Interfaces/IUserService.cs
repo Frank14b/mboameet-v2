@@ -17,8 +17,8 @@ public interface IUserService
     Task<bool> UserIdExist(int id);
     Task<bool> UserNameExist(string username, int? userId);
     Task<bool> UserEmailExist(string useremail, int? userId);
-    Task<User?> GetUserById(int id);
-    Task<List<User>> GetUsers();
+    Task<User?> GetUserByIdAsync(int id);
+    Task<ResultPaginate<ResultUserDto>> GetUsersAsync(int currentUserId, int page, int limit, string sort);
     bool IsValidPassword(string password);
     Task<bool> CheckGoogleAuthToken(string token = "", string urlHost = "");
     bool UserPasswordIsValid(string passwordSalt, string passwordHash, string password);

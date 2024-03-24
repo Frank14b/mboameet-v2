@@ -36,6 +36,8 @@ public class ResultPaginate<T>
     public required int Limit { get; set; }
     public required int Skip { get; set; }
     public required int Total { get; set; }
+    public int CurrentPage { get; set; }
+    public int LastPage { get; set; }
 }
 
 public static class AppConstants
@@ -51,6 +53,9 @@ public static class AppHubConstants
     public const string NewFeedAdded = "NewFeedAdded";
     public const string FeedDeleted = "FeedDeleted";
     public const string FeedUpdated = "FeedUpdated";
+    public const string FeedCommentUpdated = "FeedCommentUpdated";
+    public const string FeedCommentCreated = "FeedCommentCreated";
+    public const string FeedCommentDeleted = "FeedCommentDeleted";
 }
 
 public class AppImage 

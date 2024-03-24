@@ -8,7 +8,7 @@ public class CreateFeedDto
     [MinLength(2)]
     public required string Message { get; set; }
     public IFormFileCollection? Images { get; set; }
-    public IFormFile? VideoLink { get; set; }
+    public IFormFile? Video { get; set; }
 }
 
 public class FeedResultDto

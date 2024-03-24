@@ -37,7 +37,7 @@ public class FeedService : IFeedService
         _feedLikeService = feedLikeService;
     }
 
-    public async Task<FeedResultDto?> CreateNewFeed(CreateFeedDto data, int userId)
+    public async Task<FeedResultDto?> CreateNewFeedAsync(CreateFeedDto data, int userId)
     {
         try
         {
@@ -51,7 +51,12 @@ public class FeedService : IFeedService
 
             if (data?.Images is not null) // add and create feed images if available
             {
-                bool fileSaved = await _feedFileService.CreateFiles(data.Images, feed.Id, userId);
+                bool fileSaved = await _feedFileService.CreateFilesAsync(data.Images, feed.Id, userId);
+            }
+
+            if (data?.Video is not null) // add and create feed images if available
+            {
+                bool fileSaved = await _feedFileService.CreateFileAsync(data.Video, feed.Id, userId);
             }
 
             FeedResultDto result = _mapper.Map<FeedResultDto>(feed);
@@ -67,7 +72,7 @@ public class FeedService : IFeedService
         }
     }
 
-    public async Task<ResultPaginate<FeedResultDto>?> GetAllFeeds(int userId, int skip = 0, int limit = 10, string sort = "desc")
+    public async Task<ResultPaginate<FeedResultDto>?> GetAllFeedAsync(int userId, int skip = 0, int limit = 10, string sort = "desc")
     {
         try
         {
@@ -91,8 +96,8 @@ public class FeedService : IFeedService
             ResultPaginate<FeedResultDto> response = new()
             {
                 Data = result,
-                Skip = 0,
-                Limit = 10,
+                Skip = skip,
+                Limit = limit,
                 Total = feedCount
             };
 
@@ -105,7 +110,7 @@ public class FeedService : IFeedService
         }
     }
 
-    public async Task<BooleanReturnDto?> UpdateFeed(int feedId, int userId, UpdateFeedDto data)
+    public async Task<BooleanReturnDto?> UpdateFeedAsync(int feedId, int userId, UpdateFeedDto data)
     {
         try
         {
@@ -145,11 +150,11 @@ public class FeedService : IFeedService
         }
     }
 
-    public async Task<BooleanReturnDto?> DeleteFeed(int feedId, int userId)
+    public async Task<BooleanReturnDto?> DeleteFeedAsync(int feedId, int userId)
     {
         try
         {
-            Feed? feed = await GetUserFeedById(feedId, userId);
+            Feed? feed = await GetUserFeedByIdAsync(feedId, userId);
 
             if (feed is null)
             {
@@ -180,14 +185,14 @@ public class FeedService : IFeedService
         }
     }
 
-    public async Task<bool> IsValidFeedId(int id)
+    public async Task<bool> IsValidFeedIdAsync(int id)
     {
         int feed = await _context.Feeds.Where(f => f.Id == id && f.Status == (int)StatusEnum.enable).CountAsync();
         if (feed  == 0) return false;
         return true;
     }
 
-    public async Task<Feed?> GetFeedById(int id)
+    public async Task<Feed?> GetFeedByIdAsync(int id)
     {
         Feed? feed = await _context.Feeds.Where(f => f.Id == id && f.Status == (int)StatusEnum.enable).FirstAsync();
         return feed;
@@ -204,15 +209,15 @@ public class FeedService : IFeedService
         return feed;
     }
 
-    public async Task<Feed?> GetUserFeedById(int id, int userId)
+    public async Task<Feed?> GetUserFeedByIdAsync(int id, int userId)
     {
         Feed? feed = await _context.Feeds.Where(f => f.Id == id && f.Status == (int)StatusEnum.enable && f.UserId == userId).FirstAsync();
         return feed;
     }
 
-    public async Task<BooleanReturnDto?> AddFeedLikes(int feedId, int userId)
+    public async Task<BooleanReturnDto?> AddFeedLikeAsync(int feedId, int userId)
     {
-        Feed? feed = await GetFeedById(feedId);
+        Feed? feed = await GetFeedByIdAsync(feedId);
 
         if (feed is null)
         {
@@ -255,9 +260,9 @@ public class FeedService : IFeedService
         };
     }
 
-    public async Task<BooleanReturnDto?> RemoveFeedLikes(int feedId, int userId)
+    public async Task<BooleanReturnDto?> RemoveFeedLikeAsync(int feedId, int userId)
     {
-        Feed? feed = await GetFeedById(feedId);
+        Feed? feed = await GetFeedByIdAsync(feedId);
 
         if (feed is null)
         {

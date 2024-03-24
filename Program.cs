@@ -153,7 +153,6 @@ builder.Services.AddTransient<ISchema, UserSchema>();
 builder.Services.AddGraphQL(gq => gq.AddAutoSchema<ISchema>().AddSystemTextJson());
 
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddScoped<UserSeeder>();
 
 var app = builder.Build();
 

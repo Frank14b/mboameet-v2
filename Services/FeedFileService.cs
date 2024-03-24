@@ -20,13 +20,13 @@ public class FeedFileService : IFeedFileService
         _appFileService = appFileService;
     }
 
-    public async Task<bool> CreateFiles(IFormFileCollection files, int feedId, int userId)
+    public async Task<bool> CreateFilesAsync(IFormFileCollection files, int feedId, int userId)
     {
         try
         {
             List<string>? fileUrls = await _appFileService.UploadFiles(files, userId, "feeds");
 
-            if(fileUrls is null) return false;
+            if (fileUrls is null) return false;
 
             foreach (string fileLink in fileUrls)
             {
@@ -42,6 +42,36 @@ public class FeedFileService : IFeedFileService
 
                 await _context.AddAsync(feedFile);
             }
+
+            await _context.SaveChangesAsync();
+            return true;
+        }
+        catch (Exception e)
+        {
+            _logger.LogError("An error occured during feed files creation ${message}", e.Message);
+            return false;
+        }
+    }
+
+    public async Task<bool> CreateFileAsync(IFormFile file, int feedId, int userId)
+    {
+        try
+        {
+            string? fileLink = await _appFileService.UploadFile(file, userId, "feeds");
+
+            if (fileLink is null) return false;
+
+            FeedFile feedFile = new()
+            {
+                Url = fileLink,
+                PreviewUrl = fileLink,
+                Type = "",
+                DisplayMode = "",
+                FeedId = feedId,
+                UserId = userId
+            };
+
+            await _context.AddAsync(feedFile);
 
             await _context.SaveChangesAsync();
             return true;

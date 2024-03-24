@@ -87,46 +87,13 @@ public class UsersController : BaseApiController
     }
 
     [HttpGet("")]
-    public async Task<ActionResult<IEnumerable<ResultPaginate<ResultUserDto>>>> GetUsers(int skip = 0, int limit = 50, string sort = "desc")
+    public async Task<ActionResult<ResultPaginate<ResultUserDto>>> GetUsers(int page = 0, int limit = 50, string sort = "desc")
     {
         int userId = _userService.GetConnectedUser(User);
 
-        var query = _context.Users
-            .Where(x => x.Role != (int)RoleEnum.suadmin && x.Status != (int)StatusEnum.delete && x.Id != userId);
+        ResultPaginate<ResultUserDto> users = await _userService.GetUsersAsync(userId, page, limit, sort);
 
-        // Apply sorting directly in the query
-        query = sort == "desc"
-            ? query.OrderByDescending(x => x.CreatedAt)
-            : query.OrderBy(x => x.CreatedAt);
-
-        var users = await query
-            // .Include(u => u.Match.OrderByDescending(m => m.CreatedAt).Take(10))
-            .Skip(skip)
-            .Take(limit)
-            .ToListAsync();
-
-        foreach (var user in users)
-        {
-            user.Match = await _context.Matches
-                .Where(m => m.UserId == user.Id)
-                .OrderByDescending(m => m.CreatedAt)
-                .Take(5)
-                .ToListAsync();
-        }
-
-        // Map to DTO after fetching with included matches
-        var result = _mapper.Map<IEnumerable<ResultUserDto>>(users);
-
-        // Count before applying pagination for accuracy
-        var totalCount = await query.CountAsync();
-        //
-        return Ok(new ResultPaginate<ResultUserDto>
-        {
-            Data = result,
-            Limit = limit,
-            Skip = skip,
-            Total = totalCount
-        });
+        return users;
     }
 
     [HttpPost("validate-token")]
@@ -223,7 +190,7 @@ public class UsersController : BaseApiController
     {
         int userId = _userService.GetConnectedUser(User);
 
-        User? user = await _userService.GetUserById(userId);
+        User? user = await _userService.GetUserByIdAsync(userId);
 
         if (user == null) return BadRequest("An error occured");
 
@@ -270,7 +237,7 @@ public class UsersController : BaseApiController
     {
         int userId = _userService.GetConnectedUser(User);
 
-        User? user = await _userService.GetUserById(userId);
+        User? user = await _userService.GetUserByIdAsync(userId);
 
         if (user == null) return BadRequest("An error occured");
 

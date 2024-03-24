@@ -4,5 +4,6 @@ using API.Entities;
 namespace API.Interfaces;
 
 public interface IFeedFileService {
-    Task<bool> CreateFiles(IFormFileCollection files, int feedId, int userId);
+    Task<bool> CreateFilesAsync(IFormFileCollection files, int feedId, int userId);
+    Task<bool> CreateFileAsync(IFormFile file, int feedId, int userId);
 }

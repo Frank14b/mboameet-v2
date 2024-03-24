@@ -1,45 +1,35 @@
 using API.Data;
 using API.DTOs;
-using API.Entities;
-using System.Security.Cryptography;
-using System.Text;
+using API.Interfaces;
 
 namespace API.Seeders;
 
 public class UserSeeder
 {
     private readonly DataContext _context;
-    public UserSeeder(DataContext context)
+    private readonly IUserService _userService;
+    public UserSeeder(DataContext context, IUserService userService)
     {
         _context = context;
+        _userService = userService;
+
+        SeedUsersAsync();
     }
 
-    public void SeedData()
+    public async void SeedUsersAsync()
     {
         try
         {
-            if (!_context.Users.Any())
-            {
-                using var hmac = new HMACSHA512();
-
-                // var user = new User
-                // {
-                //     UserName = "frank",
-                //     PasswordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes("33@Elrangers")),
-                //     PasswordSalt = hmac.Key,
-                //     FirstName = "Frank",
-                //     LastName = "Fontcha",
-                //     Email = "franckfontcha@gmail.com",
-                //     Role = (int)RoleEnum.user,
-                //     Status = (int)StatusEnum.enable,
-                //     CreatedAt = DateTime.UtcNow,
-                //     UpdatedAt = DateTime.UtcNow,
-                // };
-
-                // _context.Users.Add(user);
-
-                // _context.SaveChanges();
-            }
+            // if (!_context.Users.Any())
+            // {
+                await _userService.CreateUserAccount(new RegisterDto() {
+                    UserName = "test",
+                    FirstName = "test",
+                    LastName = "test",
+                    Email = "test@example.com",
+                    Password = "33@Elrangers",
+                });
+            // }
         }
         catch (Exception)
         { }

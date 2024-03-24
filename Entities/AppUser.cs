@@ -7,6 +7,7 @@ namespace API.Entities
 {
     [Table("users")]
     [Index(nameof(Email), nameof(UserName), IsUnique = true)]
+    [Index(nameof(Status), nameof(Role))]
     public class User
     {
         public int Id { get; set; }
@@ -48,7 +49,7 @@ namespace API.Entities
         public string? Photo { get; set; }
     }
 
-    public enum RoleEnum
+    public enum RoleEnum: int
     {
         user = 2, // Properties Admin
         suadmin = 1, // Super admin 

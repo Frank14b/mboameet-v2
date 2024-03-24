@@ -203,7 +203,7 @@ public class UserService : IUserService
         return await _dataContext.Users.AnyAsync((x) => x.Email != null && x.Email.ToLower() == useremail.ToLower());
     }
 
-    public async Task<User?> GetUserById(int id)
+    public async Task<User?> GetUserByIdAsync(int id)
     {
         try
         {
@@ -218,10 +218,43 @@ public class UserService : IUserService
         }
     }
 
-    public async Task<List<User>> GetUsers()
+    public async Task<ResultPaginate<ResultUserDto>> GetUsersAsync(int currentUserId, int page = 0, int limit = 50, string sort = "desc")
     {
-        var result = await _dataContext.Users.Where(x => x.Status == (int)StatusEnum.enable).ToListAsync();
-        return result;
+        var query = _dataContext.Users
+                                .Where(x => x.Status != (int)StatusEnum.delete)
+                                .Where(x => x.Id != currentUserId)
+                                .Where(x => x.Role != (int)RoleEnum.suadmin);
+
+        // Apply sorting directly in the query
+        query = sort == "desc"
+            ? query.OrderByDescending(x => x.CreatedAt)
+            : query.OrderBy(x => x.CreatedAt);
+
+        // Count before applying pagination for accuracy
+        var totalCount = await query.CountAsync();
+        int totalPages = (int)Math.Ceiling((double)totalCount / limit);
+        int skip = (page - 1) * limit;
+
+        // apply the paginations directly in the query
+        var users = await query.Skip(skip)
+                               .Take(limit)
+                               .Include(x => x.Match != null ? x.Match.Take(10) : null)
+                               .ToListAsync();
+
+        // Map to DTO after fetching with included data
+        var result = _mapper.Map<IEnumerable<ResultUserDto>>(users);
+        //
+        _dataContext.Dispose();
+
+        return new ResultPaginate<ResultUserDto>
+        {
+            Data = result,
+            Limit = limit,
+            Skip = skip,
+            Total = totalCount,
+            CurrentPage = page,
+            LastPage = totalPages,
+        };
     }
 
     public bool IsValidPassword(string password)
@@ -237,7 +270,7 @@ public class UserService : IUserService
         using var hmac = new HMACSHA512(Convert.FromBase64String(passwordSalt));
         var computedHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(password));
 
-        if(passwordHash.Equals(Convert.ToBase64String(computedHash))) return true; 
+        if (passwordHash.Equals(Convert.ToBase64String(computedHash))) return true;
 
         return false;
     }
@@ -251,14 +284,9 @@ public class UserService : IUserService
             var client = new HttpClient();
             var result = await client.GetAsync(url);
 
-            if (result.IsSuccessStatusCode)
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
+            if (result.IsSuccessStatusCode)  return true;
+        
+            return false;
         }
         catch (Exception)
         {
@@ -477,27 +505,20 @@ public class UserService : IUserService
 
     public async Task<ResultUserDto?> UpdateProfileImage(User user, IFormFile image, string folder)
     {
-        try
+        string? fileUrl = await _appFileService.UploadFile(image, user.Id, "gallery");
+
+        if (fileUrl is not null)
         {
-            string? fileUrl = await _appFileService.UploadFile(image, user.Id, "gallery");
+            user.Photo = fileUrl;
 
-            if (fileUrl is not null)
-            {
-                user.Photo = fileUrl;
+            _dataContext.Update(user);
+            await _dataContext.SaveChangesAsync();
+            _dataContext.Dispose();
 
-                _dataContext.Update(user);
-                await _dataContext.SaveChangesAsync();
-                return _mapper.Map<ResultUserDto>(user);
-            }
-
-            return null;
+            return _mapper.Map<ResultUserDto>(user);
         }
 
-        catch (Exception ex)
-        {
-            _logger.LogError("Error during forgot password ${message}", ex.Message);
-            return null;
-        }
+        return null;
     }
 
     public string? GetUserIpAddress(HttpContext httpContext)
